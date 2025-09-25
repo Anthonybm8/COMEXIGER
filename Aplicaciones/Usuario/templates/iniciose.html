@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta charset="UTF-8">
+    <title>Inicio de sesión</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000000;  /* negro de fondo */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #ffffff;  /* blanco para el contenedor */
+            padding: 50px;
+            border-radius: 80px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);  /* sombra negra suave */
+            width: 550px;
+        }
+
+        .logo {
+            width: 400px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 40px;
+            margin-bottom: 45px;
+            color: #000000;  /* texto negro */
+        }
+
+        form {
+            width: 100%;
+        }
+
+        form label {
+            display: block;
+            text-align: left;
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #000000;  /* etiquetas negras */
+        }
+
+        form input[type="text"],
+        form input[type="email"],
+        form input[type="password"] {
+            width: 80%;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 2px solid #000000;  /* borde negro */
+            border-radius: 8px;
+            font-size: 20px;
+            background-color: #ffffff;  /* fondo blanco para los inputs */
+            color: #000000;  /* texto negro dentro del input */
+        }
+
+        form input[type="text"]:focus,
+        form input[type="email"]:focus,
+        form input[type="password"]:focus {
+            outline: none;
+            border-color: #FFD700;  /* amarillo para foco */
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            margin: 30px auto;
+            padding: 20px;
+            font-size: 24px;
+            background-color: #FFD700;  /* botón amarillo */
+            color: #000000;  /* texto negro en botón */
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background-color: #FFC200;  /* tono más oscuro o variación de amarillo */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="{% url 'iniciose' %}">
+        <img src="/static/img/logo.png" alt="Logo" class="logo">
+    </a>
+
+    <h1>Inicie sesión</h1>
+
+    <form method="POST" action="{% url 'iniciose' %}">
+        {% csrf_token %}
+        <label for="usuario">Usuario:</label>
+        <input type="text" name="usuario" required><br>
+
+        <label for="contrasena">Contraseña:</label>
+        <input type="password" name="contrasena" required><br>
+
+        <button class="btn" type="submit">Entrar</button>
+    </form>
+</div>
+
+{% if messages %}
+    {% for mensaje in messages %}
+    <script>
+      Swal.fire({
+        title: "ERROR",
+        text: "{{ mensaje }}",
+        icon: "warning",
+        background: "#000000",        // fondo del popup negro
+        color: "#ffffff",             // texto blanco
+        confirmButtonColor: "#FFD700" // botón confirmar en amarillo
+      });
+    </script>
+    {% endfor %}
+{% endif %}
+
+</body>
+</html>

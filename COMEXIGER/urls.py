@@ -20,7 +20,9 @@ from django.views.generic import RedirectView
 from django.urls import reverse_lazy
 
 urlpatterns = [
-    path('', RedirectView.as_view(url=reverse_lazy('dispo'), permanent=False)), 
+    path('', RedirectView.as_view(url=reverse_lazy('iniciose'), permanent=False)), 
     path('admin/', admin.site.urls),
-    path('', include('Aplicaciones.Disponibilidad.urls')),  # 👈 incluye las urls de la app
+    path('', include('Aplicaciones.Disponibilidad.urls')), 
+    path('', include('Aplicaciones.Usuario.urls')),
+    
 ]
