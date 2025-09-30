@@ -8,8 +8,8 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #000000;  /* negro de fondo */
-            display: flex;
+            background-color: #000000; 
+            display: flex;  
             justify-content: center;
             align-items: center;
             height: 100vh;
@@ -18,12 +18,12 @@
 
         .container {
             text-align: center;
-            background-color: #ffffff;  /* blanco para el contenedor */
-            padding: 50px;
+            background-color: #ffffff;  
+            padding: 40px;
             border-radius: 80px;
             overflow: hidden;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);  /* sombra negra suave */
-            width: 550px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);  
+            width: 500px;
         }
 
         .logo {
@@ -34,7 +34,7 @@
         h1 {
             font-size: 40px;
             margin-bottom: 45px;
-            color: #000000;  /* texto negro */
+            color: #000000;
         }
 
         form {
@@ -44,39 +44,39 @@
         form label {
             display: block;
             text-align: left;
-            font-size: 20px;
-            margin-bottom: 15px;
-            color: #000000;  /* etiquetas negras */
+            font-size: 15px;
+            margin-bottom: 10px;
+            color: #000000; 
         }
 
         form input[type="text"],
         form input[type="email"],
         form input[type="password"] {
             width: 80%;
-            padding: 20px;
+            padding: 10px;
             margin-bottom: 30px;
-            border: 2px solid #000000;  /* borde negro */
+            border: 2px solid #000000; 
             border-radius: 8px;
             font-size: 20px;
-            background-color: #ffffff;  /* fondo blanco para los inputs */
-            color: #000000;  /* texto negro dentro del input */
+            background-color: #ffffff;  
+            color: #000000;  
         }
 
         form input[type="text"]:focus,
         form input[type="email"]:focus,
         form input[type="password"]:focus {
             outline: none;
-            border-color: #FFD700;  /* amarillo para foco */
+            border-color: #FFD700; 
         }
 
         .btn {
             display: block;
-            width: 100%;
+            width: 85%;
             margin: 30px auto;
             padding: 20px;
             font-size: 24px;
-            background-color: #FFD700;  /* botón amarillo */
-            color: #000000;  /* texto negro en botón */
+            background-color: #FFD700;  
+            color: #000000;  
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -84,7 +84,7 @@
         }
 
         .btn:hover {
-            background-color: #FFC200;  /* tono más oscuro o variación de amarillo */
+            background-color: #FFC200; 
         }
     </style>
 </head>
@@ -116,9 +116,9 @@
         title: "ERROR",
         text: "{{ mensaje }}",
         icon: "warning",
-        background: "#000000",        // fondo del popup negro
-        color: "#ffffff",             // texto blanco
-        confirmButtonColor: "#FFD700" // botón confirmar en amarillo
+        background: "#000000",        
+        color: "#ffffff",             
+        confirmButtonColor: "#FFD700" 
       });
     </script>
     {% endfor %}

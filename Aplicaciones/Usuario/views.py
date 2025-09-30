@@ -7,9 +7,11 @@ def inicio(request):
         contrasena = request.POST.get("contrasena")
 
         if usuario == "comexad" and contrasena == "Comexiger2025":
+            messages.success(request, "BIENVENIDO ADMINISTRADOR")
             return render(request, "disponibilidad.html", {"usuario": usuario})
         else:
-            return render(request, "iniciose.html", {"error": "Credenciales incorrectas"})
+            messages.success(request, "Credenciales incorrectas") 
+            return render(request, "iniciose.html")
     return render(request, "iniciose.html")
 def cerrarsesion(request):
     request.session.flush()

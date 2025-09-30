@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Corona Admin</title>
     
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- plugins:css -->
     <link rel="stylesheet" href="{% static 'plantilla/corona/assets/vendors/mdi/css/materialdesignicons.min.css' %}">
@@ -179,5 +180,19 @@
       </nav>
       {% block body %}{% endblock %}
     </div>
+    {% if messages %}
+      {% for mensaje in messages %}
+        <script>
+          Swal.fire({
+            title: "Éxito",
+            text: "{{ mensaje }}",
+            icon: "success",
+            background: "#000000",        
+            color: "#ffffff",             
+            confirmButtonColor: "#FFD700" 
+          });
+        </script>
+      {% endfor %}
+    {% endif %}
   </body>
 </html>
