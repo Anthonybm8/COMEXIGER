@@ -5,10 +5,24 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Corona Admin</title>
-    
+    <title>COMEXIGER Admin</title>
+    <style>
+      .logo {
+              margin-bottom: 10px;
+              width: 100px;
+              height: 10px
+              border-radius: 20px;
+          }
+    </style>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!--Importando iconos de fint awasome-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!--IMportacion de boostrap-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.min.js" integrity="sha512-ykZ1QQr0Jy/4ZkvKuqWn4iF3lqPZyij9iRv6sGqLRdTPkY69YX6+7wvVGmsdBbiIfN/8OdsI7HABjvEok6ZopQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!--Importando Css de Boostrap-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" integrity="sha512-jnSuA4Ss2PkkikSOLtYs8BlYIeeIK1h99ty4YfvRPAlzr377vr3CXDb7sb7eEEBYjDtcYj+AjBH3FLv5uSJuXg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!--Importando iconos de fint awasome-->
     <!-- plugins:css -->
     <link rel="stylesheet" href="{% static 'plantilla/corona/assets/vendors/mdi/css/materialdesignicons.min.css' %}">
     <link rel="stylesheet" href="{% static 'plantilla/corona/assets/vendors/css/vendor.bundle.base.css' %}">
@@ -38,8 +52,7 @@
       <!-- partial:partials/_sidebar.html -->
       <nav class="sidebar sidebar-offcanvas" id="sidebar">
         <div class="sidebar-brand-wrapper d-none d-lg-flex align-items-center justify-content-center fixed-top">
-          <a class="sidebar-brand brand-logo" href="index.html"><img src="{% static 'plantilla/corona/assets/images/logo.svg' %}" alt="logo" /></a>
-          <a class="sidebar-brand brand-logo-mini" href="index.html"><img src="{% static 'plantilla/corona/assets/images/logo-mini.svg' %}" alt="logo" /></a>
+           <img src="/static/img/logo.jpg" alt="Logo" class="logo">
         </div>
         <ul class="nav">
           <li class="nav-item profile">
@@ -50,8 +63,8 @@
                   <span class="count bg-success"></span>
                 </div>
                 <div class="profile-name">
-                  <h5 class="mb-0 font-weight-normal">Henry Klein</h5>
-                  <span>Gold Member</span>
+                  <h5 class="mb-0 font-weight-normal">Adminstrador</h5>
+                  <span>JEFES</span>
                 </div>
               </div>
               <a href="#" id="profile-dropdown" data-toggle="dropdown"><i class="mdi mdi-dots-vertical"></i></a>
@@ -97,83 +110,34 @@
           <li class="nav-item menu-items">
             <a class="nav-link" href="index.html">
               <span class="menu-icon">
-                <i class="mdi mdi-speedometer"></i>
+                <i class="mdi mdi-security"></i>
               </span>
-              <span class="menu-title">Dashboard</span>
+              <span class="menu-title">Adminstración</span>
             </a>
           </li>
-          <li class="nav-item menu-items">
-            <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
-              <span class="menu-icon">
-                <i class="mdi mdi-laptop"></i>
-              </span>
-              <span class="menu-title">Basic UI Elements</span>
-              <i class="menu-arrow"></i>
-            </a>
-            <div class="collapse" id="ui-basic">
-              <ul class="nav flex-column sub-menu">
-                <li class="nav-item"> <a class="nav-link" href="pages/ui-features/buttons.html">Buttons</a></li>
-                <li class="nav-item"> <a class="nav-link" href="pages/ui-features/dropdowns.html">Dropdowns</a></li>
-                <li class="nav-item"> <a class="nav-link" href="pages/ui-features/typography.html">Typography</a></li>
-              </ul>
-            </div>
-          </li>
+          
           <li class="nav-item menu-items">
             <a class="nav-link" href="pages/forms/basic_elements.html">
               <span class="menu-icon">
-                <i class="mdi mdi-playlist-play"></i>
-              </span>
-              <span class="menu-title">Form Elements</span>
-            </a>
-          </li>
-          <li class="nav-item menu-items">
-            <a class="nav-link" href="pages/tables/basic-table.html">
-              <span class="menu-icon">
                 <i class="mdi mdi-table-large"></i>
               </span>
-              <span class="menu-title">Tables</span>
+              <span class="menu-title">Disponibilidad</span>
             </a>
           </li>
           <li class="nav-item menu-items">
-            <a class="nav-link" href="pages/charts/chartjs.html">
+            <a class="nav-link" href="#">
               <span class="menu-icon">
                 <i class="mdi mdi-chart-bar"></i>
               </span>
-              <span class="menu-title">Charts</span>
+              <span class="menu-title">Rendimiento</span>
             </a>
           </li>
           <li class="nav-item menu-items">
-            <a class="nav-link" href="pages/icons/mdi.html">
+            <a class="nav-link" href="{% url 'cerrarsesion' %}">
               <span class="menu-icon">
-                <i class="mdi mdi-contacts"></i>
+                <i class="mdi mdi-exit-to-app"></i>
               </span>
-              <span class="menu-title">Icons</span>
-            </a>
-          </li>
-          <li class="nav-item menu-items">
-            <a class="nav-link" data-toggle="collapse" href="#auth" aria-expanded="false" aria-controls="auth">
-              <span class="menu-icon">
-                <i class="mdi mdi-security"></i>
-              </span>
-              <span class="menu-title">User Pages</span>
-              <i class="menu-arrow"></i>
-            </a>
-            <div class="collapse" id="auth">
-              <ul class="nav flex-column sub-menu">
-                <li class="nav-item"> <a class="nav-link" href="pages/samples/blank-page.html"> Blank Page </a></li>
-                <li class="nav-item"> <a class="nav-link" href="pages/samples/error-404.html"> 404 </a></li>
-                <li class="nav-item"> <a class="nav-link" href="pages/samples/error-500.html"> 500 </a></li>
-                <li class="nav-item"> <a class="nav-link" href="pages/samples/login.html"> Login </a></li>
-                <li class="nav-item"> <a class="nav-link" href="pages/samples/register.html"> Register </a></li>
-              </ul>
-            </div>
-          </li>
-          <li class="nav-item menu-items">
-            <a class="nav-link" href="http://www.bootstrapdash.com/demo/corona-free/jquery/documentation/documentation.html">
-              <span class="menu-icon">
-                <i class="mdi mdi-file-document-box"></i>
-              </span>
-              <span class="menu-title">Documentation</span>
+              <span class="menu-title">Cerrar seseión</span>
             </a>
           </li>
         </ul>
