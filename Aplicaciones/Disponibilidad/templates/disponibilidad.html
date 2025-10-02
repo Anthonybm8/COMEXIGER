@@ -1,5 +1,45 @@
 {% extends 'plantilla.html' %}
 {% load static %}
 {% block body %}
-<h1>holis muda</h1>
+<main class="container py-4">
+
+    <div class="text-center mb-4"><br><br>
+        <h2 class="fw-bold">👥 Disponibilidad</h2><br>
+        <hr class="w-50 mx-auto">
+    </div>
+
+    <div class="table-responsive shadow-sm rounded ">
+        <table class="table table-bordered " id="tbl_disponibilidad">
+            <thead >
+                <tr>
+                    <th>ID</th>
+                    <th>N° MESA</th>
+                    <th>Variedad</th>
+                    <th>Medida</th>
+                    <th>Stock</th>
+                    <th>FECHA DE ENTRADA/HORA</th>
+                    <th>FECHA DE SALIDA/HORA</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+
+</main>
+<script>
+    $(document).ready(function() {
+        let table = new DataTable('#tbl_disponibilidad', {
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/2.3.1/i18n/es-ES.json'
+            },
+            dom: 'Bfrtip', 
+            buttons: [
+                'copy',
+                'csv',
+                'excel',
+                'pdf',
+                'print'
+            ]
+        });
+    });
+</script>
 {% endblock %}
