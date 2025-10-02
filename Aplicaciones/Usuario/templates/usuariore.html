@@ -6,7 +6,7 @@
 <h1 class="text-center">USUARIOS REGITRADOS</h1>
 
 <hr>
-<table class="table table-bordered table-striped table-hover ">
+<table class="table table-bordered table-striped table-hover " id="tbl_usuarios">
     <thead>
         <tr class="table-success text-center">
             <th>NOMBRES</th>
@@ -22,4 +22,21 @@
     </a>
 </div>
 </main>
+<script>
+    $(document).ready(function() {
+        let table = new DataTable('#tbl_usuarios', {
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/2.3.1/i18n/es-ES.json'
+            },
+            dom: 'Bfrtip', 
+            buttons: [
+                'copy',
+                'csv',
+                'excel',
+                'pdf',
+                'print'
+            ]
+        });
+    });
+</script>
 {% endblock %}
