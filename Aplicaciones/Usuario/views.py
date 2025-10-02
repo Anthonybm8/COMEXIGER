@@ -17,3 +17,6 @@ def cerrarsesion(request):
     request.session.flush()
     messages.success(request, "Sesión cerrada correctamente.")
     return redirect("iniciose")
+
+def inicios(request):
+    return render(request,"usuariore.html")
