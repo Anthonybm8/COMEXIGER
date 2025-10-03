@@ -9787,7 +9787,7 @@ input[type="button"].btn-block {
   color: #ffffff;
   text-align: left;
   list-style: none;
-  background-color: #191c24;
+  background-color: #242319;
   background-clip: padding-box;
   border: 1px solid #2c2e33;
   border-radius: 0.25rem; }
@@ -11082,7 +11082,7 @@ input[type="button"].btn-block {
   .nav-link:hover, .nav-link:focus {
     text-decoration: none; }
   .nav-link.disabled {
-    color: #6c757d;
+    color: #787d6c;
     pointer-events: none;
     cursor: default; }
 
@@ -11399,7 +11399,7 @@ input[type="button"].btn-block {
   flex-direction: column;
   min-width: 0;
   word-wrap: break-word;
-  background-color: #191c24;
+  background-color: #000;
   background-clip: border-box;
   border: 1px solid rgba(0, 0, 0, 0.125);
   border-radius: 0.25rem; }
@@ -15716,7 +15716,7 @@ body,
 html {
   overflow-x: hidden;
   padding-right: 0 !important;
-  background-color: #191c24; }
+  background-color: #191111; }
 
 *:-moz-full-screen,
 *:-webkit-full-screen,
@@ -20623,7 +20623,7 @@ div.tagsinput {
 /* Sidebar */
 .sidebar {
   min-height: calc(100vh - 70px);
-  background: #191c24;
+  background: #DBCE37;
   font-weight: normal;
   padding: 0;
   width: 244px;
@@ -20726,7 +20726,7 @@ div.tagsinput {
               font-size: inherit;
               color: inherit; }
         .sidebar .nav .nav-item .nav-link .menu-title {
-          color: inherit;
+          color: white;
           display: inline-block;
           font-size: 0.9375rem;
           line-height: 1;
@@ -20747,7 +20747,7 @@ div.tagsinput {
           left: 0;
           top: 0; }
         .sidebar .nav .nav-item.active > .nav-link .menu-title {
-          color: #ffffff; }
+          color: #fff; }
         .sidebar .nav .nav-item.active > .nav-link i {
           color: #ffffff; }
       .sidebar .nav .nav-item.nav-profile .nav-link {
