@@ -1,129 +1,131 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <meta charset="UTF-8">
     <title>Inicio de sesión</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #000000; 
-            display: flex;  
+            background-color: #1c1c1c; /* fondo negro */
+            margin: 0;
+            height: 100vh;
+            display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            position: relative;
+        }
+
+        /* Triángulos decorativos */
+        .triangle-left {
+            width: 0;
+            height: 0;
+            border-left: 150px solid #d1d02e;
+            border-top: 150px solid transparent;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .triangle-right {
+            width: 0;
+            height: 0;
+            border-right: 150px solid #d1d02e;
+            border-bottom: 150px solid transparent;
+            position: absolute;
+            bottom: 0;
+            right: 0;
         }
 
         .container {
+            background-color: #0f0b0b; /* caja negra */
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
             text-align: center;
-            background-color: #ffffff;  
-            padding: 40px;
-            border-radius: 80px;
-            overflow: hidden;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);  
-            width: 500px;
+            width: 400px;
+            position: relative;
+            z-index: 1;
         }
 
         .logo {
-            width: 250px;
-            margin-bottom: 10px;
-            border-radius: 20px;
+            width: 200px;
+            margin-bottom: 20px;
         }
 
-        h1 {
-            font-size: 40px;
-            margin-bottom: 45px;
-            color: #000000;
-        }
-
-        form {
-            width: 100%;
+        h2 {
+            color: #d1d02e;
+            margin-bottom: 30px;
         }
 
         form label {
             display: block;
             text-align: left;
-            font-size: 18px;
-            margin-bottom: 10px;
-            color: #000000; 
+            font-size: 16px;
+            color: #d1d02e;
+            margin-bottom: 5px;
         }
 
         form input[type="text"],
-        form input[type="email"],
         form input[type="password"] {
-            width: 80%;
+            width: 100%;
             padding: 10px;
-            margin-bottom: 30px;
-            border: 2px solid #000000; 
-            border-radius: 8px;
-            font-size: 20px;
-            background-color: #ffffff;  
-            color: #000000;  
-        }
-
-        form input[type="text"]:focus,
-        form input[type="email"]:focus,
-        form input[type="password"]:focus {
-            outline: none;
-            border-color: #FFD700; 
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: none;
+            font-size: 16px;
         }
 
         .btn {
-            display: block;
-            width: 85%;
-            margin: 30px auto;
-            padding: 20px;
-            font-size: 24px;
-            background-color: #FFD700;  
-            color: #000000;  
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
             border: none;
-            border-radius: 8px;
+            border-radius: 5px;
+            background-color: #567d23; /* verde */
+            color: white;
             cursor: pointer;
-            text-decoration: none;
         }
 
         .btn:hover {
-            background-color: #FFC200; 
+            background-color: #46611a;
         }
     </style>
 </head>
 <body>
+    <div class="triangle-left"></div>
+    <div class="triangle-right"></div>
 
-<div class="container">
-    <a href="{% url 'iniciose' %}">
+    <div class="container">
         <img src="/static/img/logo.jpg" alt="Logo" class="logo">
-    </a>
 
-    <h1>Inicie sesión</h1>
+        <h2>INICIO DE SESIÓN</h2>
 
-    <form method="POST" action="{% url 'iniciose' %}">
-        {% csrf_token %}
-        <label for="usuario">Usuario:</label>
-        <input type="text" name="usuario" required><br>
+        <form method="POST" action="{% url 'iniciose' %}">
+            {% csrf_token %}
+            <label for="usuario">USUARIO:</label>
+            <input type="text" name="usuario" required>
 
-        <label for="contrasena">Contraseña:</label>
-        <input type="password" name="contrasena" required><br>
+            <label for="contrasena">CONTRASEÑA:</label>
+            <input type="password" name="contrasena" required>
 
-        <button class="btn" type="submit">Entrar</button>
-    </form>
-</div>
+            <button type="submit" class="btn">CONTINUAR</button>
+        </form>
+    </div>
 
-{% if messages %}
-    {% for mensaje in messages %}
-    <script>
-      Swal.fire({
-        title: "ERROR",
-        text: "{{ mensaje }}",
-        icon: "warning",
-        background: "#000000",        
-        color: "#ffffff",             
-        confirmButtonColor: "#FFD700" 
-      });
-    </script>
-    {% endfor %}
-{% endif %}
-
+    {% if messages %}
+        {% for mensaje in messages %}
+        <script>
+          Swal.fire({
+            title: "ERROR",
+            text: "{{ mensaje }}",
+            icon: "warning",
+            background: "#1c1c1c",
+            color: "#ffffff",
+            confirmButtonColor: "#d1d02e"
+          });
+        </script>
+        {% endfor %}
+    {% endif %}
 </body>
 </html>
