@@ -1,0 +1,113 @@
+{% extends 'plantilla.html' %}
+{% load static %}
+{% block body %}
+<main class="container py-4">
+    <div class="row">
+    <div class="col-md-3"></div>
+    <div class="col-md-6 bg-black">
+        <h1>Nuevo Registro de Rendimiento</h1>
+
+        <form action="{% url 'guardar_rendimiento' %}" method="post" id="form_rendimiento">
+        {% csrf_token %}
+
+        <label for="numero_mesa">Número de mesa</label><br>
+        <input class="form-control" type="number" name="numero_mesa" id="numero_mesa" required><br>
+
+        <label for="variedad">Variedad</label><br>
+        <input class="form-control" type="text" name="variedad" id="variedad" required><br>
+
+        <label for="medida">Medida</label><br>
+        <input class="form-control" type="text" name="medida" id="medida" required><br>
+
+        <label for="bonches">Bonches</label><br>
+        <input class="form-control" type="number" name="bonches" id="bonches" required><br>
+
+        <label for="fecha_entrada">Fecha de entrada</label><br>
+        <input class="form-control" type="datetime-local" name="fecha_entrada" id="fecha_entrada" required><br>
+
+        <label for="fecha_salida">Fecha de salida</label><br>
+        <input class="form-control" type="datetime-local" name="fecha_salida" id="fecha_salida"><br>
+
+        <button class="btn btn-success" type="submit">Guardar</button>
+        <a class="btn btn-outline-danger" href="{% url 'rendimiento' %}">Cancelar</a><br><br>
+        </form>
+    </div>
+    <div class="col-md-3"></div>
+    </div>
+</main>
+<script>
+$(function () {
+    $.validator.addMethod("lettersOnly", function(value, element) {
+        return this.optional(element) || /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(value);
+    }, "Solo letras, por favor.");
+
+    $('#form_rendimiento').validate({
+        ignore: [],
+        rules: {
+            numero_mesa: {
+                required: true,
+                number: true,
+                min: 1
+            },
+            variedad: {
+                required: true,
+                lettersOnly: true,
+                minlength: 3,
+                maxlength: 100
+            },
+            medida: {
+                required: true,
+                maxlength: 50
+            },
+            bonches: {
+                required: true,
+                number: true,
+                min: 1
+            },
+            fecha_entrada: {
+                required: true
+            },
+            fecha_salida: {
+                required: false
+            }
+        },
+        messages: {
+            numero_mesa: {
+                required: "Por favor ingrese el número de mesa.",
+                number: "Debe ser un número válido.",
+                min: "El número de mesa debe ser positivo."
+            },
+            variedad: {
+                required: "Por favor ingrese la variedad.",
+                minlength: "La variedad debe tener al menos 3 caracteres.",
+                maxlength: "La variedad no puede superar 100 caracteres.",
+                lettersOnly: "Solo se permiten letras."
+            },
+            medida: {
+                required: "Por favor ingrese la medida.",
+                maxlength: "La medida no puede superar 50 caracteres."
+            },
+            bonches: {
+                required: "Por favor ingrese el número de bonches.",
+                number: "Debe ser un número válido.",
+                min: "Debe ser al menos 1."
+            },
+            fecha_entrada: {
+                required: "Por favor ingrese la fecha de entrada."
+            }
+        },
+        errorElement: 'div',
+        errorClass: 'error',
+        errorPlacement: function (error, element) {
+            error.insertAfter(element);
+        },
+        highlight: function (element) {
+            $(element).addClass('is-invalid');
+        },
+        unhighlight: function (element) {
+            $(element).removeClass('is-invalid');
+        }
+    });
+});
+</script>
+{% endblock %}

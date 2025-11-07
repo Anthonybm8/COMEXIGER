@@ -1,46 +1,213 @@
 {% extends 'plantilla.html' %}
 {% load static %}
-
 {% block body %}
 
+<br>
 <main class="container py-4">
-
-    <div class="text-center mb-4"><br><br>
-        <h2 class="fw-bold">👥 Rendimiento</h2><br>
-        <hr class="w-50 mx-auto">
+    <h1 class="text-center">Listado de Rendimiento</h1>
+    <div class="text-center">
+        <a href="{% url 'nuevo_rendimiento' %}" class="btn btn-primary">
+            Nuevo Rendimiento
+        </a>
     </div>
+    <hr>
+    <table id="table_rendimiento">
+        <thead>
+            <tr class="table-success text-center">
+                <th>ID</th>
+                <th>Número de Mesa</th>
+                <th>Variedad</th>
+                <th>Medida</th>
+                <th>Bonches</th>
+                <th>Fecha de Entrada</th>
+                <th>Fecha de Salida</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rendimiento %}
+            <tr>
+                <td>{{ r.id }}</td>
+                <td>{{ r.numero_mesa }}</td>
+                <td>{{ r.variedad }}</td>
+                <td>{{ r.medida }}</td>
+                <td>{{ r.bonches }}</td>
+                <td>{{ r.fecha_entrada }}</td>
+                <td>{{ r.fecha_salida|default:"-" }}</td>
+                <td>
+                    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEditar{{ r.id }}">
+                        <i class="fa fa-pen"></i>
+                    </button>
 
-    <div class="table-responsive shadow-sm rounded ">
-        <table class="table table-bordered " id="tbl_rendimiento">
-            <thead >
-                <tr>
-                    <th>ID</th>
-                    <th>N° MESA</th>
-                    <th>BONCHES</th>
-                    <th>FECHA DE ENTRADA/HORA</th>
-                    <th>FECHA DE SALIDA/HORA</th>
-                    <th>TOTAL A PAGAR</th>
-                </tr>
-            </thead>
-        </table>
-    </div>
+                    <a href="{% url 'eliminar_rendimiento' r.id %}" class="btn btn-outline-danger"
+                    onclick="return confirm('¿Seguro que deseas eliminar este rendimiento?')">
+                        <i class="fa fa-trash"></i>
+                    </a>
+                    <div class="modal fade" id="modalEditar{{ r.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header bg-warning text-dark">
+                                    <h5 class="modal-title">Editar Rendimiento</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <form action="{% url 'procesar_edicion_rendimiento' %}" method="post" class="form_rendimiento">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="id" value="{{ r.id }}">
+
+                                        <label>Número de Mesa</label>
+                                        <input class="form-control" type="number" name="numero_mesa" value="{{ r.numero_mesa }}" required><br>
+
+                                        <label>Variedad</label>
+                                        <input class="form-control" type="text" name="variedad" value="{{ r.variedad }}" required><br>
+
+                                        <label>Medida</label>
+                                        <input class="form-control" type="text" name="medida" value="{{ r.medida }}" required><br>
+
+                                        <label>Bonches</label>
+                                        <input class="form-control" type="number" name="bonches" value="{{ r.bonches }}" required><br>
+
+                                        <label>Fecha de Entrada</label>
+                                        <input class="form-control" type="datetime-local" name="fecha_entrada"
+                                            value="{{ r.fecha_entrada|date:'Y-m-d\\TH:i' }}" required><br>
+
+                                        <label>Fecha de Salida</label>
+                                        <input class="form-control" type="datetime-local" name="fecha_salida"
+                                            value="{{ r.fecha_salida|date:'Y-m-d\\TH:i' }}"><br>
+
+                                        <div class="d-flex justify-content-end">
+                                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                                <i class="fa fa-times me-1"></i> Cancelar
+                                            </button>
+                                            <button type="submit" class="btn btn-success ms-2">
+                                                <i class="fa fa-save me-1"></i> Guardar Cambios
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center">No hay registros de rendimiento.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
 </main>
 <script>
-    $(document).ready(function() {
-        let table = new DataTable('#tbl_rendimiento', {
-            language: {
-                url: 'https://cdn.datatables.net/plug-ins/2.3.1/i18n/es-ES.json'
+$(function () {
+
+    // VALIDACIONES DE FORMULARIO
+    $.validator.addMethod("lettersNumbers", function(value, element) {
+        return this.optional(element) || /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ\s]+$/.test(value);
+    }, "Solo letras y números.");
+
+    $('.form_rendimiento').each(function() {
+        $(this).validate({
+            ignore: [],
+            rules: {
+                numero_mesa: {
+                    required: true,
+                    number: true,
+                    min: 1
+                },
+                variedad: {
+                    required: true,
+                    lettersNumbers: true,
+                    minlength: 2,
+                    maxlength: 80
+                },
+                medida: {
+                    required: true,
+                    lettersNumbers: true,
+                    minlength: 1,
+                    maxlength: 50
+                },
+                bonches: {
+                    required: true,
+                    number: true,
+                    min: 1
+                },
+                fecha_entrada: {
+                    required: true,
+                },
+                fecha_salida: {
+                    required: false,
+                }
             },
-            dom: 'Bfrtip', 
-            buttons: [
-                'copy',
-                'csv',
-                'excel',
-                'pdf',
-                'print'
-            ]
+            messages: {
+                numero_mesa: {
+                    required: "Ingrese el número de mesa.",
+                    number: "Solo se permiten números.",
+                    min: "Debe ser mayor que cero."
+                },
+                variedad: {
+                    required: "Ingrese la variedad.",
+                    lettersNumbers: "Solo letras y números.",
+                    minlength: "Mínimo 2 caracteres.",
+                    maxlength: "Máximo 80 caracteres."
+                },
+                medida: {
+                    required: "Ingrese la medida.",
+                    lettersNumbers: "Solo letras y números.",
+                    minlength: "Mínimo 1 carácter.",
+                    maxlength: "Máximo 50 caracteres."
+                },
+                bonches: {
+                    required: "Ingrese la cantidad de bonches.",
+                    number: "Solo se permiten números.",
+                    min: "Debe ser mayor que cero."
+                },
+                fecha_entrada: {
+                    required: "Seleccione la fecha de entrada."
+                }
+            },
+            errorElement: 'div',
+            errorClass: 'error',
+            errorPlacement: function (error, element) {
+                error.insertAfter(element);
+            },
+            highlight: function (element) {
+                $(element).addClass('is-invalid');
+            },
+            unhighlight: function (element) {
+                $(element).removeClass('is-invalid');
+            },
+            submitHandler: function(form) {
+                form.submit();
+            }
         });
     });
+
+    // DATATABLES
+    $('#table_rendimiento').DataTable({
+        responsive: true,
+        dom: 'lBfrtip',
+        buttons: [
+            { extend: 'copy', text: '<i class="fa fa-copy"></i> Copiar' },
+            { extend: 'csv', text: '<i class="fa fa-file-csv"></i> CSV' },
+            { extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel' },
+            { extend: 'pdf', text: '<i class="fa fa-file-pdf"></i> PDF' },
+            { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir' }
+        ],
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+        },
+        lengthMenu: [
+            [5, 10, 25, 50, 100, -1],
+            [5, 10, 25, 50, 100, "Todos"]
+        ],
+        pageLength: 10
+    });
+});
 </script>
+
+<br><br>
 {% endblock %}
