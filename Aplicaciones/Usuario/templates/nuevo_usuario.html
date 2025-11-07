@@ -1,0 +1,103 @@
+{% extends 'plantilla.html' %}
+{% load static %}
+{% block body %}
+<main class="container py-4">
+    <div class="row">
+        <div class="col-md-3"></div>
+
+        <div class="col-md-6 bg-black p-4 rounded-3 text-white">
+            <h1 class="mb-4 text-center">Nuevo Registro de Usuario</h1>
+
+            <form action="{% url 'guardar_usuario' %}" method="post" id="form_usuario">
+                {% csrf_token %}
+
+                <label for="nombres">Nombres</label><br>
+                <input class="form-control" type="text" name="nombres" id="nombres" required><br>
+
+                <label for="apellidos">Apellidos</label><br>
+                <input class="form-control" type="text" name="apellidos" id="apellidos" required><br>
+
+                <label for="mesa">Mesa</label><br>
+                <input class="form-control" type="text" name="mesa" id="mesa" required><br>
+
+                <label for="cargo">Cargo</label><br>
+                <input class="form-control" type="text" name="cargo" id="cargo" required><br>
+
+                <div class="d-flex justify-content-between mt-3">
+                    <button class="btn btn-success" type="submit">Guardar</button>
+                    <a class="btn btn-outline-danger" href="{% url 'usuariore' %}">Cancelar</a>
+                </div>
+            </form>
+        </div>x
+
+        <div class="col-md-3"></div>
+    </div>
+</main>
+
+<script>
+$(function () {
+    $.validator.addMethod("lettersOnly", function(value, element) {
+        return this.optional(element) || /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(value);
+    }, "Solo letras, por favor.");
+
+    $('#form_usuario').validate({
+        ignore: [],
+        rules: {
+            nombres: {
+                required: true,
+                lettersOnly: true,
+                minlength: 3,
+                maxlength: 100
+            },
+            apellidos: {
+                required: true,
+                lettersOnly: true,
+                minlength: 3,
+                maxlength: 100
+            },
+            mesa: {
+                required: true,
+                maxlength: 100
+            },
+            cargo: {
+                required: true,
+                maxlength: 100
+            }
+        },
+        messages: {
+            nombres: {
+                required: "Por favor ingrese los nombres.",
+                minlength: "Debe tener al menos 3 caracteres.",
+                maxlength: "No puede superar 100 caracteres.",
+                lettersOnly: "Solo se permiten letras."
+            },
+            apellidos: {
+                required: "Por favor ingrese los apellidos.",
+                minlength: "Debe tener al menos 3 caracteres.",
+                maxlength: "No puede superar 100 caracteres.",
+                lettersOnly: "Solo se permiten letras."
+            },
+            mesa: {
+                required: "Por favor ingrese la mesa.",
+                maxlength: "No puede superar 100 caracteres."
+            },
+            cargo: {
+                required: "Por favor ingrese el cargo.",
+                maxlength: "No puede superar 100 caracteres."
+            }
+        },
+        errorElement: 'div',
+        errorClass: 'error',
+        errorPlacement: function (error, element) {
+            error.insertAfter(element);
+        },
+        highlight: function (element) {
+            $(element).addClass('is-invalid');
+        },
+        unhighlight: function (element) {
+            $(element).removeClass('is-invalid');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,42 +1,182 @@
 {% extends 'plantilla.html' %}
 {% load static %}
 {% block body %}
-<main>
-    <br>
-<h1 class="text-center">USUARIOS REGITRADOS</h1>
 
-<hr>
-<table class="table table-bordered table-striped table-hover " id="tbl_usuarios">
-    <thead>
-        <tr class="table-success text-center">
-            <th>NOMBRES</th>
-            <th>APELLIDOS</th>
-            <th>MESA</th>
-            <th>CARGO</th>
-        </tr>
-    </thead>
-</table>
-<div class="text-center ">
-    <a href="/#/" class="btn btn-primary " >
-        Agregar Nuevo Usuario
-    </a>
-</div>
+<br>
+<main class="container py-4">
+    <h1 class="text-center">Listado de Usuarios</h1>
+    <div class="text-center">
+        <a href="{% url 'nuevo_usuario' %}" class="btn btn-primary">
+            Nuevo Usuario
+        </a>
+    </div>
+    <hr>
+
+    <table id="table_usuarios" >
+        <thead>
+            <tr class="table-success text-center">
+                <th>ID</th>
+                <th>Nombres</th>
+                <th>Apellidos</th>
+                <th>Mesa</th>
+                <th>Cargo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuario %}
+            <tr>
+                <td>{{ u.id }}</td>
+                <td>{{ u.nombres }}</td>
+                <td>{{ u.apellidos }}</td>
+                <td>{{ u.mesa }}</td>
+                <td>{{ u.cargo }}</td>
+                <td class="text-center">
+                    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEditar{{ u.id }}">
+                        <i class="fa fa-pen"></i>
+                    </button>
+                    <a href="{% url 'eliminar_usuario' u.id %}" class="btn btn-outline-danger"
+                       onclick="return confirm('¿Seguro que deseas eliminar este usuario?')">
+                        <i class="fa fa-trash"></i>
+                    </a>
+                    <div class="modal fade" id="modalEditar{{ u.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header bg-warning text-dark">
+                                    <h5 class="modal-title">Editar Usuario</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <form action="{% url 'procesar_edicion_usuario' %}" method="post" class="form_usuario">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="id" value="{{ u.id }}">
+
+                                        <label for="nombres">Nombres</label>
+                                        <input class="form-control" type="text" name="nombres" value="{{ u.nombres }}" required><br>
+
+                                        <label for="apellidos">Apellidos</label>
+                                        <input class="form-control" type="text" name="apellidos" value="{{ u.apellidos }}" required><br>
+
+                                        <label for="mesa">Mesa</label>
+                                        <input class="form-control" type="text" name="mesa" value="{{ u.mesa }}" required><br>
+
+                                        <label for="cargo">Cargo</label>
+                                        <input class="form-control" type="text" name="cargo" value="{{ u.cargo }}" required><br>
+
+                                        <div class="d-flex justify-content-end">
+                                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                                <i class="fa fa-times me-1"></i> Cancelar
+                                            </button>
+                                            <button type="submit" class="btn btn-success ms-2">
+                                                <i class="fa fa-save me-1"></i> Guardar Cambios
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">No hay usuarios registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </main>
+
 <script>
-    $(document).ready(function() {
-        let table = new DataTable('#tbl_usuarios', {
-            language: {
-                url: 'https://cdn.datatables.net/plug-ins/2.3.1/i18n/es-ES.json'
+$(function () {
+    $.validator.addMethod("lettersOnly", function(value, element) {
+        return this.optional(element) || /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(value);
+    }, "Solo letras, por favor.");
+
+    $('.form_usuario').each(function() {
+        $(this).validate({
+            ignore: [],
+            rules: {
+                nombres: {
+                    required: true,
+                    lettersOnly: true,
+                    minlength: 3,
+                    maxlength: 100
+                },
+                apellidos: {
+                    required: true,
+                    lettersOnly: true,
+                    minlength: 3,
+                    maxlength: 100
+                },
+                mesa: {
+                    required: true,
+                    maxlength: 100
+                },
+                cargo: {
+                    required: true,
+                    maxlength: 100
+                }
             },
-            dom: 'Bfrtip', 
-            buttons: [
-                'copy',
-                'csv',
-                'excel',
-                'pdf',
-                'print'
-            ]
+            messages: {
+                nombres: {
+                    required: "Por favor ingrese los nombres.",
+                    minlength: "Debe tener al menos 3 caracteres.",
+                    maxlength: "No puede superar 100 caracteres."
+                },
+                apellidos: {
+                    required: "Por favor ingrese los apellidos.",
+                    minlength: "Debe tener al menos 3 caracteres.",
+                    maxlength: "No puede superar 100 caracteres."
+                },
+                mesa: {
+                    required: "Por favor ingrese la mesa.",
+                    maxlength: "No puede superar 100 caracteres."
+                },
+                cargo: {
+                    required: "Por favor ingrese el cargo.",
+                    maxlength: "No puede superar 100 caracteres."
+                }
+            },
+            errorElement: 'div',
+            errorClass: 'error',
+            errorPlacement: function (error, element) {
+                error.insertAfter(element);
+            },
+            highlight: function (element) {
+                $(element).addClass('is-invalid');
+            },
+            unhighlight: function (element) {
+                $(element).removeClass('is-invalid');
+            },
+            submitHandler: function(form) {
+                form.submit();
+            }
         });
     });
+
+    $('#table_usuarios').DataTable({
+        responsive: true,
+        dom: 'lBfrtip',
+        buttons: [
+            { extend: 'copy', text: '<i class="fa fa-copy"></i> Copiar' },
+            { extend: 'csv', text: '<i class="fa fa-file-csv"></i> CSV' },
+            { extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel' },
+            { extend: 'pdf', text: '<i class="fa fa-file-pdf"></i> PDF' },
+            { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir' }
+        ],
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+        },
+        lengthMenu: [
+            [5, 10, 25, 50, 100, -1],
+            [5, 10, 25, 50, 100, "Todos"]
+        ],
+        pageLength: 10
+    });
+});
 </script>
+
+<br><br>
 {% endblock %}

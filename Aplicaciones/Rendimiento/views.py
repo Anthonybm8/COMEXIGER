@@ -63,7 +63,7 @@ def procesar_edicion_rendimiento(request):
                 rendimiento.fecha_salida = None
 
             rendimiento.save()
-            messages.success(request, "Rendimiento actualizado correctamente ✅")
+            messages.success(request, "Rendimiento actualizado correctamente ")
         except Exception as e:
             messages.error(request, f"Error al procesar la edición: {e}")
         return redirect('rendimiento')
