@@ -40,11 +40,18 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',   
+    'channels', 
     'Aplicaciones.Disponibilidad',
     'Aplicaciones.Usuario',
     'Aplicaciones.Rendimiento',
 ]
-
+ASGI_APPLICATION = 'COMEXIGER.asgi.application'
+# Para pruebas locales (in-memory):
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',

@@ -8,3 +8,6 @@ class Rendimiento(models.Model):
     bonches = models.PositiveIntegerField()
     fecha_entrada = models.DateTimeField(default=timezone.now)
     fecha_salida = models.DateTimeField(null=True, blank=True)
+    codigo_id = models.CharField(max_length=50, null=True, blank=True)
+
+

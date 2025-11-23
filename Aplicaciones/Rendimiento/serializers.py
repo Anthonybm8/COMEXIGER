@@ -9,4 +9,4 @@ class RendimientoSerializer(serializers.ModelSerializer):
 class RendimientoCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rendimiento
-        fields = ['numero_mesa', 'variedad', 'medida', 'bonches', 'fecha_entrada', 'fecha_salida']
+        fields = ['codigo_id','numero_mesa', 'variedad', 'medida', 'bonches', 'fecha_entrada', 'fecha_salida']

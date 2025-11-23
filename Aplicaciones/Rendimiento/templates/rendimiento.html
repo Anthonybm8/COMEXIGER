@@ -11,9 +11,9 @@
         </a>
     </div>
     <hr>
-    <table id="table_rendimiento">
+    <table id="table_rendimiento" >
         <thead>
-            <tr class="table-success text-center" class="table table-bordered table-striped table-hover">
+            <tr class="table-success">
                 <th>ID</th>
                 <th>Número de Mesa</th>
                 <th>Variedad</th>
@@ -40,9 +40,11 @@
                     </button>
 
                     <a href="{% url 'eliminar_rendimiento' r.id %}" class="btn btn-outline-danger"
-                    onclick="return confirm('¿Seguro que deseas eliminar este rendimiento?')">
+                       onclick="return confirm('¿Seguro que deseas eliminar este rendimiento?')">
                         <i class="fa fa-trash"></i>
                     </a>
+
+                    <!-- Modal de Edición -->
                     <div class="modal fade" id="modalEditar{{ r.id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content">
@@ -50,12 +52,11 @@
                                     <h5 class="modal-title">Editar Rendimiento</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
-
                                 <div class="modal-body">
                                     <form action="{% url 'procesar_edicion_rendimiento' %}" method="post" class="form_rendimiento">
                                         {% csrf_token %}
                                         <input type="hidden" name="id" value="{{ r.id }}">
-
+                                        
                                         <label>Número de Mesa</label>
                                         <input class="form-control" type="number" name="numero_mesa" value="{{ r.numero_mesa }}" required><br>
 
@@ -70,11 +71,11 @@
 
                                         <label>Fecha de Entrada</label>
                                         <input class="form-control" type="datetime-local" name="fecha_entrada"
-                                            value="{{ r.fecha_entrada|date:'Y-m-d\\TH:i' }}" required><br>
+                                               value="{{ r.fecha_entrada|date:'Y-m-d\\TH:i' }}" required><br>
 
                                         <label>Fecha de Salida</label>
                                         <input class="form-control" type="datetime-local" name="fecha_salida"
-                                            value="{{ r.fecha_salida|date:'Y-m-d\\TH:i' }}"><br>
+                                               value="{{ r.fecha_salida|date:'Y-m-d\\TH:i' }}"><br>
 
                                         <div class="d-flex justify-content-end">
                                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
@@ -89,7 +90,7 @@
                             </div>
                         </div>
                     </div>
-
+                    <!-- Fin Modal -->
                 </td>
             </tr>
             {% empty %}
@@ -99,93 +100,16 @@
             {% endfor %}
         </tbody>
     </table>
-
 </main>
+
+<!-- Scripts -->
 <script>
-$(function () {
+let table;
 
-    $.validator.addMethod("lettersNumbers", function(value, element) {
-        return this.optional(element) || /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ\s]+$/.test(value);
-    }, "Solo letras y números.");
+$(document).ready(function() {
 
-    $('.form_rendimiento').each(function() {
-        $(this).validate({
-            ignore: [],
-            rules: {
-                numero_mesa: {
-                    required: true,
-                    number: true,
-                    min: 1
-                },
-                variedad: {
-                    required: true,
-                    lettersNumbers: true,
-                    minlength: 2,
-                    maxlength: 80
-                },
-                medida: {
-                    required: true,
-                    lettersNumbers: true,
-                    minlength: 1,
-                    maxlength: 50
-                },
-                bonches: {
-                    required: true,
-                    number: true,
-                    min: 1
-                },
-                fecha_entrada: {
-                    required: true,
-                },
-                fecha_salida: {
-                    required: false,
-                }
-            },
-            messages: {
-                numero_mesa: {
-                    required: "Ingrese el número de mesa.",
-                    number: "Solo se permiten números.",
-                    min: "Debe ser mayor que cero."
-                },
-                variedad: {
-                    required: "Ingrese la variedad.",
-                    lettersNumbers: "Solo letras y números.",
-                    minlength: "Mínimo 2 caracteres.",
-                    maxlength: "Máximo 80 caracteres."
-                },
-                medida: {
-                    required: "Ingrese la medida.",
-                    lettersNumbers: "Solo letras y números.",
-                    minlength: "Mínimo 1 carácter.",
-                    maxlength: "Máximo 50 caracteres."
-                },
-                bonches: {
-                    required: "Ingrese la cantidad de bonches.",
-                    number: "Solo se permiten números.",
-                    min: "Debe ser mayor que cero."
-                },
-                fecha_entrada: {
-                    required: "Seleccione la fecha de entrada."
-                }
-            },
-            errorElement: 'div',
-            errorClass: 'error',
-            errorPlacement: function (error, element) {
-                error.insertAfter(element);
-            },
-            highlight: function (element) {
-                $(element).addClass('is-invalid');
-            },
-            unhighlight: function (element) {
-                $(element).removeClass('is-invalid');
-            },
-            submitHandler: function(form) {
-                form.submit();
-            }
-        });
-    });
-
-    $('#table_rendimiento').DataTable({
+    // Inicializar DataTable
+    table = $('#table_rendimiento').DataTable({
         responsive: true,
         dom: 'lBfrtip',
         buttons: [
@@ -204,6 +128,63 @@ $(function () {
         ],
         pageLength: 10
     });
+
+    // Validación de formularios
+    $.validator.addMethod("lettersNumbers", function(value, element) {
+        return this.optional(element) || /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ\s]+$/.test(value);
+    }, "Solo letras y números.");
+
+    $('.form_rendimiento').each(function() {
+        $(this).validate({
+            ignore: [],
+            rules: {
+                numero_mesa: { required: true, number: true, min: 1 },
+                variedad: { required: true, lettersNumbers: true, minlength: 2, maxlength: 80 },
+                medida: { required: true, lettersNumbers: true, minlength: 1, maxlength: 50 },
+                bonches: { required: true, number: true, min: 1 },
+                fecha_entrada: { required: true },
+                fecha_salida: { required: false }
+            },
+            messages: {
+                numero_mesa: { required: "Ingrese el número de mesa.", number: "Solo se permiten números.", min: "Debe ser mayor que cero." },
+                variedad: { required: "Ingrese la variedad.", lettersNumbers: "Solo letras y números.", minlength: "Mínimo 2 caracteres.", maxlength: "Máximo 80 caracteres." },
+                medida: { required: "Ingrese la medida.", lettersNumbers: "Solo letras y números.", minlength: "Mínimo 1 carácter.", maxlength: "Máximo 50 caracteres." },
+                bonches: { required: "Ingrese la cantidad de bonches.", number: "Solo se permiten números.", min: "Debe ser mayor que cero." },
+                fecha_entrada: { required: "Seleccione la fecha de entrada." }
+            },
+            errorElement: 'div',
+            errorClass: 'error',
+            errorPlacement: function (error, element) { error.insertAfter(element); },
+            highlight: function (element) { $(element).addClass('is-invalid'); },
+            unhighlight: function (element) { $(element).removeClass('is-invalid'); },
+            submitHandler: function(form) { form.submit(); }
+        });
+    });
+
+    // Conectar WebSocket
+    const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+    const ws_url = `${ws_scheme}://${window.location.host}/ws/rendimientos/`;
+    const socket = new WebSocket(ws_url);
+
+    socket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        console.log("Nuevo rendimiento:", data);
+
+        // Agregar fila al DataTable
+        table.row.add([
+            data.id,
+            data.numero_mesa,
+            data.variedad,
+            data.medida,
+            data.bonches,
+            data.fecha_entrada,
+            data.fecha_salida || "-",
+            `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
+             <a href="/rendimiento/eliminar/${data.id}/" class="btn btn-outline-danger"
+             onclick="return confirm('¿Seguro que deseas eliminar este rendimiento?')">
+             <i class="fa fa-trash"></i></a>`
+        ]).draw(false);
+    };
 });
 </script>
 
