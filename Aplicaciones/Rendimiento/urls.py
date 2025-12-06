@@ -18,5 +18,4 @@ urlpatterns = [
     path('api/rendimientos/', views.api_rendimiento_list, name='api-rendimiento-list'),
     path('api/rendimientos/<int:pk>/', views.api_rendimiento_detail, name='api-rendimiento-detail'),
     path('api/rendimientos/stats/', views.api_rendimiento_stats, name='api-rendimiento-stats'),
-
 ]

@@ -134,10 +134,8 @@ def api_rendimiento_list(request):
         mesa = data.get("numero_mesa")
         variedad = data.get("variedad")
         medida = data.get("medida")
-
         if not codigo or not mesa or not variedad or not medida:
             return Response({"error": "Datos incompletos"}, status=400)
-
         hoy = timezone.localdate()
         existente = Rendimiento.objects.filter(
             numero_mesa=mesa,
@@ -145,14 +143,12 @@ def api_rendimiento_list(request):
             medida=medida,
             fecha_entrada__date=hoy
         ).first()
-
         if existente:
             if existente.codigo_id == codigo:
                 return Response({"msg": "QR repetido, escaneo ignorado"}, status=200)
             existente.bonches += 1
             existente.codigo_id = codigo
             existente.save()
-
             # WebSocket notification
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
@@ -164,7 +160,7 @@ def api_rendimiento_list(request):
             )
 
             return Response(RendimientoSerializer(existente).data, status=200)
-
+            
         # Crear nuevo registro
         nuevo = Rendimiento.objects.create(
             codigo_id=codigo,

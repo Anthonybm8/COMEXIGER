@@ -11,9 +11,11 @@
         </a>
     </div>
     <hr>
-    <table id="table_rendimiento" >
+
+    <table id="table_rendimiento">
         <thead>
             <tr class="table-success">
+                <th style="display:none;">Fecha ISO</th>
                 <th>ID</th>
                 <th>Número de Mesa</th>
                 <th>Variedad</th>
@@ -24,27 +26,33 @@
                 <th>Acciones</th>
             </tr>
         </thead>
+
         <tbody>
             {% for r in rendimiento %}
             <tr>
+                <!-- COLUMNA OCULTA ISO -->
+                <td style="display:none;">{{ r.fecha_entrada|date:"Y-m-d\\TH:i" }}</td>
+
                 <td>{{ r.id }}</td>
                 <td>{{ r.numero_mesa }}</td>
                 <td>{{ r.variedad }}</td>
                 <td>{{ r.medida }}</td>
                 <td>{{ r.bonches }}</td>
-                <td>{{ r.fecha_entrada }}</td>
+
+                <td data-fecha="{{ r.fecha_entrada }}">{{ r.fecha_entrada }}</td>
                 <td>{{ r.fecha_salida|default:"-" }}</td>
+
                 <td>
                     <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEditar{{ r.id }}">
                         <i class="fa fa-pen"></i>
                     </button>
 
                     <a href="{% url 'eliminar_rendimiento' r.id %}" class="btn btn-outline-danger"
-                       onclick="return confirm('¿Seguro que deseas eliminar este rendimiento?')">
+                        onclick="return confirm('¿Seguro que deseas eliminar este rendimiento?')">
                         <i class="fa fa-trash"></i>
                     </a>
 
-                    <!-- Modal de Edición -->
+                    <!-- Modal -->
                     <div class="modal fade" id="modalEditar{{ r.id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content">
@@ -52,11 +60,12 @@
                                     <h5 class="modal-title">Editar Rendimiento</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
+
                                 <div class="modal-body">
                                     <form action="{% url 'procesar_edicion_rendimiento' %}" method="post" class="form_rendimiento">
                                         {% csrf_token %}
                                         <input type="hidden" name="id" value="{{ r.id }}">
-                                        
+
                                         <label>Número de Mesa</label>
                                         <input class="form-control" type="number" name="numero_mesa" value="{{ r.numero_mesa }}" required><br>
 
@@ -87,28 +96,28 @@
                                         </div>
                                     </form>
                                 </div>
+
                             </div>
                         </div>
                     </div>
                     <!-- Fin Modal -->
+
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" class="text-center">No hay registros de rendimiento.</td>
+                <td colspan="9" class="text-center">No hay registros de rendimiento.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </main>
 
-<!-- Scripts -->
 <script>
 let table;
 
 $(document).ready(function() {
 
-    // Inicializar DataTable
     table = $('#table_rendimiento').DataTable({
         responsive: true,
         dom: 'lBfrtip',
@@ -119,72 +128,127 @@ $(document).ready(function() {
             { extend: 'pdf', text: '<i class="fa fa-file-pdf"></i> PDF' },
             { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir' }
         ],
+        columnDefs: [
+            { targets: 0, visible: false }   // ← CORRECTO
+        ],
         language: {
             url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
-        },
-        lengthMenu: [
-            [5, 10, 25, 50, 100, -1],
-            [5, 10, 25, 50, 100, "Todos"]
-        ],
-        pageLength: 10
+        }
     });
+    function formatearFechaLarga(iso) {
+        if (!iso) return "-";
 
-    // Validación de formularios
-    $.validator.addMethod("lettersNumbers", function(value, element) {
-        return this.optional(element) || /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ\s]+$/.test(value);
-    }, "Solo letras y números.");
+        const fecha = new Date(iso);
+        const opciones = {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        };
 
-    $('.form_rendimiento').each(function() {
-        $(this).validate({
-            ignore: [],
-            rules: {
-                numero_mesa: { required: true, number: true, min: 1 },
-                variedad: { required: true, lettersNumbers: true, minlength: 2, maxlength: 80 },
-                medida: { required: true, lettersNumbers: true, minlength: 1, maxlength: 50 },
-                bonches: { required: true, number: true, min: 1 },
-                fecha_entrada: { required: true },
-                fecha_salida: { required: false }
-            },
-            messages: {
-                numero_mesa: { required: "Ingrese el número de mesa.", number: "Solo se permiten números.", min: "Debe ser mayor que cero." },
-                variedad: { required: "Ingrese la variedad.", lettersNumbers: "Solo letras y números.", minlength: "Mínimo 2 caracteres.", maxlength: "Máximo 80 caracteres." },
-                medida: { required: "Ingrese la medida.", lettersNumbers: "Solo letras y números.", minlength: "Mínimo 1 carácter.", maxlength: "Máximo 50 caracteres." },
-                bonches: { required: "Ingrese la cantidad de bonches.", number: "Solo se permiten números.", min: "Debe ser mayor que cero." },
-                fecha_entrada: { required: "Seleccione la fecha de entrada." }
-            },
-            errorElement: 'div',
-            errorClass: 'error',
-            errorPlacement: function (error, element) { error.insertAfter(element); },
-            highlight: function (element) { $(element).addClass('is-invalid'); },
-            unhighlight: function (element) { $(element).removeClass('is-invalid'); },
-            submitHandler: function(form) { form.submit(); }
-        });
-    });
+        // Convertir a español Ecuador
+        return fecha.toLocaleString("es-EC", opciones)
+                    .replace(" 0", " ")           // quita cero innecesario en día/hora
+                    .replace(",", "");             // elimina coma después del mes
+    }
 
-    // Conectar WebSocket
-    const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
-    const ws_url = `${ws_scheme}://${window.location.host}/ws/rendimientos/`;
-    const socket = new WebSocket(ws_url);
+    // WEBSOCKET
+    const ws = new WebSocket(
+        (location.protocol === "https:" ? "wss" : "ws") + "://localhost:8000/ws/rendimientos/"
+    );
 
-    socket.onmessage = function(e) {
+    ws.onmessage = function(e) {
         const data = JSON.parse(e.data);
-        console.log("Nuevo rendimiento:", data);
 
-        // Agregar fila al DataTable
+        console.log("==== WS RECIBIDO ====");
+        console.log("Mesa:", data.numero_mesa);
+        console.log("Variedad:", data.variedad);
+        console.log("Medida:", data.medida);
+        console.log("Fecha entrada:", data.fecha_entrada);
+
+        // Normalizar datos entrantes
+        const incomingMesa  = parseInt(data.numero_mesa);
+        const incomingVar   = (data.variedad || "").toLowerCase().trim();
+        const incomingMed   = (data.medida || "").toLowerCase().trim();
+        const incomingFecha = (data.fecha_entrada || "").split("T")[0];
+
+        console.log("Fecha ISO procesada:", incomingFecha);
+
+        let filaExistente = null;
+
+        console.log("=== BUSCANDO FILA COINCIDENTE ===");
+
+        table.rows().every(function() {
+            const row = this.data();
+
+            // OJO: índices basados en tu tabla
+            const rowFechaISO = ("" + row[0]).split("T")[0]; 
+            const rowMesa = parseInt(row[2]);
+            const rowVar  = (row[3] || "").toLowerCase().trim();
+            const rowMed  = (row[4] || "").toLowerCase().trim();
+
+
+            console.log("------------------------------");
+            console.log("Revisando fila:");
+            console.log("Fila Mesa:", rowMesa, " | Incoming:", incomingMesa);
+            console.log("Fila Var:",  rowVar,  " | Incoming:", incomingVar);
+            console.log("Fila Med:",  rowMed,  " | Incoming:", incomingMed);
+            console.log("Fila Fecha:", rowFechaISO, " | Incoming:", incomingFecha);
+
+            const cmpMesa  = (rowMesa === incomingMesa);
+            const cmpVar   = (rowVar === incomingVar);
+            const cmpMed   = (rowMed === incomingMed);
+            const cmpFecha = (rowFechaISO === incomingFecha);
+
+            console.log("Coincidencias => Mesa:", cmpMesa, " Var:", cmpVar, " Med:", cmpMed, " Fecha:", cmpFecha);
+
+            if (cmpMesa && cmpVar && cmpMed && cmpFecha) {
+                console.log(">>> FILA COINCIDENTE ENCONTRADA");
+                filaExistente = this;
+                return false;
+            }
+        });
+
+        // SI EXISTE → ACTUALIZAR BONCHES
+        if (filaExistente) {
+            const rowData = filaExistente.data();
+            const bonchesActuales = parseInt(rowData[5]) || 0;
+
+            console.log("Actualizando bonches:");
+            console.log("Bonches actuales:", bonchesActuales);
+            console.log("Bonches entrantes:", data.bonches);
+
+            // Aquí decides si SUMA 1 o SUMA lo que diga el WS
+            rowData[5] = bonchesActuales + 1;
+
+            filaExistente.data(rowData).draw(false);
+            console.log(">>> FILA ACTUALIZADA");
+            return;
+        }
+
+        console.log(">>> NO SE ENCONTRÓ FILA COINCIDENTE — CREANDO NUEVA");
+
+        // SI NO EXISTE → CREAR FILA NUEVA
         table.row.add([
-            data.id,
-            data.numero_mesa,
-            data.variedad,
-            data.medida,
-            data.bonches,
-            data.fecha_entrada,
-            data.fecha_salida || "-",
+            data.fecha_entrada,             // 0 Fecha ISO (oculta)
+            data.id,                        // 1 ID
+            data.numero_mesa,               // 2 Mesa
+            data.variedad,                  // 3 Variedad
+            data.medida,                    // 4 Medida
+            data.bonches,                   // 5 Bonches
+            formatearFechaLarga(data.fecha_entrada),             // 6 Fecha entrada
+            data.fecha_salida || "-",       // 7 Fecha salida
             `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
-             <a href="/rendimiento/eliminar/${data.id}/" class="btn btn-outline-danger"
-             onclick="return confirm('¿Seguro que deseas eliminar este rendimiento?')">
-             <i class="fa fa-trash"></i></a>`
+            <a href="/rendimiento/eliminar/${data.id}/" class="btn btn-outline-danger">
+            <i class="fa fa-trash"></i></a>` // 8 Acciones
         ]).draw(false);
+
+
+        console.log(">>> FILA NUEVA AGREGADA");
     };
+
+
 });
 </script>
 

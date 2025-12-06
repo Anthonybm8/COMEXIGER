@@ -10,7 +10,7 @@ def notificar_rendimiento(rendimiento):
     async_to_sync(channel_layer.group_send)(
         "rendimientos",
         {
-            "type": "rendimiento_event",
+            "type": "nuevo_rendimiento",
             "data": data
         }
     )
