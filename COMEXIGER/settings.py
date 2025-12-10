@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-6_n66h@dj*n-dahia$9%v8%hz*mh*xe=qa@2qln_e%@$p82$20
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',   
     'channels', 
-    'Aplicaciones.Disponibilidad',
+    'Aplicaciones.Disponibilidad.apps.DisponibilidadConfig',
     'Aplicaciones.Usuario',
     'Aplicaciones.Rendimiento',
 ]
@@ -139,16 +139,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ]
 }
-ALLOWED_HOSTS = [
-    'localhost', 
-    '127.0.0.1', 
-    '192.168.110.243',  # ← Tu IP local
-    '0.0.0.0',
-    '10.0.2.2',         # Para emulador Android
-]

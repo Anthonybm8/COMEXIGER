@@ -1,36 +1,13 @@
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
-from .models import Rendimiento
-from .serializers import RendimientoSerializer
-
-
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import Rendimiento
-from Aplicaciones.Disponibilidad.models import Disponibilidad
-
+from Aplicaciones.Rendimiento.models import Rendimiento
+from .models import Disponibilidad
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-
-channel_layer = get_channel_layer()
-
-def notificar_rendimiento(rendimiento):
-    data = RendimientoSerializer(rendimiento).data
-    async_to_sync(channel_layer.group_send)(
-        "rendimientos",
-        {
-            "type": "nuevo_rendimiento",
-            "data": data
-        }
-    )
 
 
 @receiver(post_save, sender=Rendimiento)
 def actualizar_disponibilidad(sender, instance, created, **kwargs):
-    """
-    Actualiza o crea una disponibilidad cada vez que se guarda un rendimiento.
-    """
-
     if not created:
         return  
 
@@ -52,15 +29,20 @@ def actualizar_disponibilidad(sender, instance, created, **kwargs):
         disponibilidad.stock += 1
         disponibilidad.save()
 
-    # ----- WEBSOCKET -----
+    # ---- WEBSOCKET COMPATIBLE ----
     layer = get_channel_layer()
     async_to_sync(layer.group_send)(
         "disponibilidad_group",
         {
-            "type": "stock.update",
-            "mesa": numero_mesa,
-            "variedad": variedad,
-            "medida": medida,
-            "stock": disponibilidad.stock
+            "type": "stock_update",
+            "data": {
+                "id": disponibilidad.id,
+                "numero_mesa": disponibilidad.numero_mesa,
+                "variedad": disponibilidad.variedad,
+                "medida": disponibilidad.medida,
+                "stock": disponibilidad.stock,
+                "fecha_entrada": str(disponibilidad.fecha_entrada),
+                "fecha_salida": str(disponibilidad.fecha_salida) if disponibilidad.fecha_salida else ""
+            }
         }
     )

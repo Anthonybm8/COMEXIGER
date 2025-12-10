@@ -1,3 +1,25 @@
 from django.db import models
 
 # Create your models here.
+
+from django.db import models
+
+class Disponibilidad(models.Model):
+    numero_mesa = models.PositiveIntegerField(verbose_name="Número de mesa")
+    variedad = models.CharField(max_length=100)
+    medida = models.CharField(max_length=50)
+
+    stock = models.PositiveIntegerField(default=0)
+
+    fecha_entrada = models.DateTimeField()
+    fecha_salida = models.DateTimeField(null=True, blank=True)  
+
+    class Meta:
+        verbose_name = "Disponibilidad"
+        verbose_name_plural = "Disponibilidades"
+
+    def __str__(self):
+        return f"Mesa {self.numero_mesa} - {self.variedad} {self.medida}"
+
+
+

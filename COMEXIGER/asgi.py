@@ -14,14 +14,21 @@ from django.core.asgi import get_asgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'COMEXIGER.settings')
 
-import Aplicaciones.Rendimiento.routing  # <--- exacto con mayúsculas
+django_asgi_app = get_asgi_application()
+# Importar routings de ambas apps
+import Aplicaciones.Rendimiento.routing
+import Aplicaciones.Disponibilidad.routing
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
+
     "websocket": AuthMiddlewareStack(
         URLRouter(
             Aplicaciones.Rendimiento.routing.websocket_urlpatterns
+            +
+            Aplicaciones.Disponibilidad.routing.websocket_urlpatterns
         )
     ),
 })
+
 

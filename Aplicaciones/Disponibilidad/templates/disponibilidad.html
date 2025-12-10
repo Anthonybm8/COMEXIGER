@@ -4,7 +4,7 @@
 <main class="container py-4">
 
     <div class="text-center mb-4"><br><br>
-        <h2 class="fw-bold">👥 Disponibilidad</h2><br>
+        <h2 class="fw-bold">Disponibilidad</h2><br>
         <hr class="w-50 mx-auto">
     </div>
 
@@ -26,20 +26,61 @@
 
 </main>
 <script>
-    $(document).ready(function() {
-        let table = new DataTable('#tbl_disponibilidad', {
-            language: {
-                url: 'https://cdn.datatables.net/plug-ins/2.3.1/i18n/es-ES.json'
-            },
-            dom: 'Bfrtip', 
-            buttons: [
-                'copy',
-                'csv',
-                'excel',
-                'pdf',
-                'print'
-            ]
-        });
+$(document).ready(function() {
+
+    let table = new DataTable('#tbl_disponibilidad', {
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/2.3.1/i18n/es-ES.json'
+        },
+        dom: 'Bfrtip',
+        buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
     });
+
+    // WebSocket
+    const ws = new WebSocket(
+        (location.protocol === "https:" ? "wss://" : "ws://") +
+        window.location.host +
+        "/ws/disponibilidad/"
+    );
+
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+
+        let rowExistente = null;
+
+        // Buscar si ya existe por ID
+        table.rows().every(function() {
+            if (this.data()[0] == data.id) {
+                rowExistente = this;
+            }
+        });
+
+        if (rowExistente) {
+            // SI EXISTE → ACTUALIZAR FILA
+            rowExistente.data([
+                data.id,
+                data.numero_mesa,
+                data.variedad,
+                data.medida,
+                data.stock,
+                data.fecha_entrada,
+                data.fecha_salida
+            ]).draw(false);
+        } else {
+            // SI NO EXISTE → AGREGAR FILA
+            table.row.add([
+                data.id,
+                data.numero_mesa,
+                data.variedad,
+                data.medida,
+                data.stock,
+                data.fecha_entrada,
+                data.fecha_salida
+            ]).draw(false);
+        }
+    };
+
+});
 </script>
+
 {% endblock %}
