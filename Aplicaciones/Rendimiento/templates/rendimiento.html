@@ -163,10 +163,6 @@
 
                 </td>
             </tr>
-            {% empty %}
-            <tr>
-                <td colspan="9" class="text-center">No hay registros de rendimiento.</td>
-            </tr>
             {% endfor %}
         </tbody>
     </table>
@@ -218,6 +214,8 @@ $(document).ready(function() {
             url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
         }
     });
+    window.tableRendimientodReady = true;
+
 
     // =======================
     // WEBSOCKET
