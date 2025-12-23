@@ -1,85 +1,339 @@
 {% extends 'plantilla.html' %}
 {% load static %}
 {% block body %}
-<main class="container py-4">
 
-    <div class="text-center mb-4"><br><br>
-        <h2 class="fw-bold">Disponibilidad</h2><br>
-        <hr class="w-50 mx-auto">
+<br>
+<main class="container py-4"><br><br>
+    <h1 class="text-center">Listado de Disponibilidad</h1>
+    <hr>
+
+    <!-- FILTROS -->
+    <div class="card p-3 mb-4">
+        <div class="row g-3">
+
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Ordenar por</label>
+                <select id="ordenarPor" class="form-select">
+                    <option value="">-- Seleccionar --</option>
+                    <option value="mesa">Mesa</option>
+                    <option value="variedad">Variedad</option>
+                    <option value="medida">Medida</option>
+                    <option value="fecha">Fecha</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Mostrar</label>
+                <select id="ordenReciente" class="form-select">
+                    <option value="">-- Seleccionar --</option>
+                    <option value="true">Más recientes primero</option>
+                    <option value="false">Más antiguos primero</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Fecha exacta</label>
+                <input type="date" id="fechaExacta" class="form-control">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Desde</label>
+                <input type="date" id="fechaDesde" class="form-control">
+            </div>
+
+            <div class="col-md-3 mt-3">
+                <label class="form-label fw-bold">Hasta</label>
+                <input type="date" id="fechaHasta" class="form-control">
+            </div>
+
+            <div class="col-md-3 mt-4">
+                <button id="btnAplicarFiltros" class="btn btn-primary w-100">
+                    <i class="fa fa-filter"></i> Aplicar filtros
+                </button>
+            </div>
+
+            <div class="col-md-3 mt-4">
+                <button id="btnLimpiarFiltros" class="btn btn-secondary w-100">
+                    <i class="fa fa-eraser"></i> Limpiar
+                </button>
+            </div>
+
+        </div>
     </div>
 
-    <div class="table-responsive shadow-sm rounded ">
-        <table class="table table-bordered " id="tbl_disponibilidad">
-            <thead >
-                <tr>
-                    <th>ID</th>
-                    <th>N° MESA</th>
-                    <th>Variedad</th>
-                    <th>Medida</th>
-                    <th>Stock</th>
-                    <th>FECHA DE ENTRADA/HORA</th>
-                    <th>FECHA DE SALIDA/HORA</th>
-                </tr>
-            </thead>
-        </table>
-    </div>
+    <!-- TABLA -->
+    <table id="table_disponibilidad" class="table table-striped">
+        <thead>
+            <tr class="table-success">
+                <th style="display:none;">Fecha ISO</th>
+                <th>ID</th>
+                <th>N° Mesa</th>
+                <th>Variedad</th>
+                <th>Medida</th>
+                <th>Stock</th>
+                <th>Fecha Entrada</th>
+                <th>Fecha Salida</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
 
+        <tbody>
+            {% for d in disponibilidades %}
+            <tr>
+                <td style="display:none;">{{ d.fecha_entrada|date:"Y-m-d\\TH:i" }}</td>
+                <td>{{ d.id }}</td>
+                <td>{{ d.numero_mesa }}</td>
+                <td>{{ d.variedad }}</td>
+                <td>{{ d.medida }}</td>
+                <td>{{ d.stock }}</td>
+                <td>{{ d.fecha_entrada }}</td>
+                <td>{{ d.fecha_salida|default:"-" }}</td>
+
+                <td>
+                    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEditar{{ d.id }}">
+                        <i class="fa fa-pen"></i>
+                    </button>
+
+                    <a href="{% url 'eliminar_disponibilidad' d.id %}" class="btn btn-outline-danger"
+                       onclick="return confirm('¿Eliminar este registro?')">
+                        <i class="fa fa-trash"></i>
+                    </a>
+
+                    <!-- MODAL -->
+                    <div class="modal fade" id="modalEditar{{ d.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header bg-warning">
+                                    <h5 class="modal-title">Editar Disponibilidad</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <form action="{% url 'procesar_edicion_disponibilidad' %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="id" value="{{ d.id }}">
+
+                                        <label>Mesa</label>
+                                        <input class="form-control" type="number" name="numero_mesa" value="{{ d.numero_mesa }}" required>
+
+                                        <label>Variedad</label>
+                                        <input class="form-control" type="text" name="variedad" value="{{ d.variedad }}" required>
+
+                                        <label>Medida</label>
+                                        <input class="form-control" type="text" name="medida" value="{{ d.medida }}" required>
+
+                                        <label>Stock</label>
+                                        <input class="form-control" type="number" name="stock" value="{{ d.stock }}" required>
+
+                                        <label>Fecha Entrada</label>
+                                        <input class="form-control" type="datetime-local" name="fecha_entrada"
+                                               value="{{ d.fecha_entrada|date:'Y-m-d\\TH:i' }}" required>
+
+                                        <label>Fecha Salida</label>
+                                        <input class="form-control" type="datetime-local" name="fecha_salida"
+                                               value="{{ d.fecha_salida|date:'Y-m-d\\TH:i' }}">
+
+                                        <div class="text-end mt-3">
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fa fa-save"></i> Guardar
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" class="text-center">No hay registros</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </main>
 <script>
+// =======================
+// FUNCIONES GLOBALES
+// =======================
+function formatearFechaLarga(iso) {
+    if (!iso) return "-";
+
+    const fecha = new Date(iso);
+    const opciones = {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    };
+
+    return fecha.toLocaleString("es-EC", opciones)
+                .replace(" 0", " ")
+                .replace(",", "");
+}
+
+// =======================
+// INICIALIZACIÓN DE DATATABLES
+// =======================
+let table;
+
 $(document).ready(function() {
 
-    let table = new DataTable('#tbl_disponibilidad', {
+    table = $('#table_disponibilidad').DataTable({
+        order: [],
+        ordering: false,
+        responsive: true,
+        dom: 'lBfrtip',
+        buttons: [
+            { extend: 'copy', text: '<i class="fa fa-copy"></i> Copiar' },
+            { extend: 'csv', text: '<i class="fa fa-file-csv"></i> CSV' },
+            { extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel' },
+            { extend: 'pdf', text: '<i class="fa fa-file-pdf"></i> PDF' },
+            { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir' }
+        ],
+        columnDefs: [
+            { targets: 0, visible: false }   // columna oculta ISO
+        ],
         language: {
-            url: 'https://cdn.datatables.net/plug-ins/2.3.1/i18n/es-ES.json'
-        },
-        dom: 'Bfrtip',
-        buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+        }
     });
 
-    // WebSocket
+    // =======================
+    // WEBSOCKET DISPONIBILIDAD
+    // =======================
     const ws = new WebSocket(
-        (location.protocol === "https:" ? "wss://" : "ws://") +
-        window.location.host +
-        "/ws/disponibilidad/"
+        (location.protocol === "https:" ? "wss" : "ws") +
+        "://" + window.location.host + "/ws/disponibilidad/"
     );
 
-    ws.onmessage = function(event) {
-        const data = JSON.parse(event.data);
+    ws.onmessage = function(e) {
+        const data = JSON.parse(e.data);
 
-        let rowExistente = null;
+        const incomingMesa  = parseInt(data.numero_mesa);
+        const incomingVar   = (data.variedad || "").toLowerCase().trim();
+        const incomingMed   = (data.medida || "").toLowerCase().trim();
+        const incomingFecha = (data.fecha_entrada || "").split("T")[0];
 
-        // Buscar si ya existe por ID
+        let filaExistente = null;
+
         table.rows().every(function() {
-            if (this.data()[0] == data.id) {
-                rowExistente = this;
+            const row = this.data();
+            const rowFechaISO = ("" + row[0]).split("T")[0];
+            const rowMesa = parseInt(row[2]);
+            const rowVar  = (row[3] || "").toLowerCase().trim();
+            const rowMed  = (row[4] || "").toLowerCase().trim();
+
+            if (
+                rowMesa === incomingMesa &&
+                rowVar === incomingVar &&
+                rowMed === incomingMed &&
+                rowFechaISO === incomingFecha
+            ) {
+                filaExistente = this;
+                return false;
             }
         });
 
-        if (rowExistente) {
-            // SI EXISTE → ACTUALIZAR FILA
-            rowExistente.data([
-                data.id,
-                data.numero_mesa,
-                data.variedad,
-                data.medida,
-                data.stock,
-                data.fecha_entrada,
-                data.fecha_salida
-            ]).draw(false);
-        } else {
-            // SI NO EXISTE → AGREGAR FILA
-            table.row.add([
-                data.id,
-                data.numero_mesa,
-                data.variedad,
-                data.medida,
-                data.stock,
-                data.fecha_entrada,
-                data.fecha_salida
-            ]).draw(false);
+        if (filaExistente) {
+            const rowData = filaExistente.data();
+            const stockActual = parseInt(rowData[5]) || 0;
+            rowData[5] = stockActual + 1; // ✅ IGUAL QUE BONCHES
+            filaExistente.data(rowData).draw(false);
+            return;
         }
-    };
 
+        // ➕ NUEVA FILA
+        table.row.add([
+            data.fecha_entrada,                   // 0 Fecha ISO
+            data.id,                              // 1 ID
+            data.numero_mesa,                     // 2 Mesa
+            data.variedad,                        // 3 Variedad
+            data.medida,                          // 4 Medida
+            data.stock || 1,                      // 5 Stock
+            formatearFechaLarga(data.fecha_entrada), // 6 Fecha entrada
+            data.fecha_salida || "-",             // 7 Fecha salida
+            `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
+             <a href="/disponibilidad/eliminar/${data.id}" class="btn btn-outline-danger">
+             <i class="fa fa-trash"></i></a>`
+        ]).draw(false);
+    };
+});
+
+// =======================
+// FILTROS Y ORDENAMIENTO
+// =======================
+document.getElementById("btnAplicarFiltros").addEventListener("click", function () {
+
+    let ordenar = document.getElementById("ordenarPor").value;
+    let reciente = document.getElementById("ordenReciente").value;
+    let fecha = document.getElementById("fechaExacta").value;
+    let desde = document.getElementById("fechaDesde").value;
+    let hasta = document.getElementById("fechaHasta").value;
+
+    let url = "/api/disponibilidades/?";
+
+    if (ordenar) url += `ordenar=${ordenar}&`;
+    if (reciente) url += `reciente=${reciente}&`;
+    if (fecha) url += `fecha=${fecha}&`;
+    if (desde && hasta) url += `desde=${desde}&hasta=${hasta}&`;
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            table.clear();
+            data.forEach(item => {
+                table.row.add([
+                    item.fecha_entrada,
+                    item.id,
+                    item.numero_mesa,
+                    item.variedad,
+                    item.medida,
+                    item.stock,
+                    formatearFechaLarga(item.fecha_entrada),
+                    item.fecha_salida || "-",
+                    `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
+                     <a href="/disponibilidad/eliminar/${item.id}" class="btn btn-outline-danger">
+                     <i class="fa fa-trash"></i></a>`
+                ]);
+            });
+            table.draw(false);
+        });
+});
+
+document.getElementById("btnLimpiarFiltros").addEventListener("click", function () {
+
+    document.getElementById("ordenarPor").value = "";
+    document.getElementById("ordenReciente").value = "";
+    document.getElementById("fechaExacta").value = "";
+    document.getElementById("fechaDesde").value = "";
+    document.getElementById("fechaHasta").value = "";
+
+    fetch("/api/disponibilidades/")
+        .then(r => r.json())
+        .then(data => {
+            table.clear();
+            data.forEach(item => {
+                table.row.add([
+                    item.fecha_entrada,
+                    item.id,
+                    item.numero_mesa,
+                    item.variedad,
+                    item.medida,
+                    item.stock,
+                    formatearFechaLarga(item.fecha_entrada),
+                    item.fecha_salida || "-",
+                    `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
+                     <a href="/disponibilidad/eliminar/${item.id}" class="btn btn-outline-danger">
+                     <i class="fa fa-trash"></i></a>`
+                ]);
+            });
+            table.draw(false);
+        });
 });
 </script>
 

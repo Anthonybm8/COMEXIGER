@@ -12,8 +12,6 @@ from rest_framework.response import Response
 from .serializers import RendimientoSerializer
 from django.utils import timezone
 
-# ------------------ Vistas HTML ------------------
-
 def inicio(request):
     listadoRendimiento = Rendimiento.objects.all()
     return render(request, 'rendimiento.html', {'rendimiento': listadoRendimiento})
@@ -123,9 +121,56 @@ class RendimientoViewSet(viewsets.ModelViewSet):
 @api_view(['GET', 'POST'])
 def api_rendimiento_list(request):
     if request.method == 'GET':
-        rendimientos = Rendimiento.objects.all().order_by('-fecha_entrada')
+
+    # ----- PARÁMETROS -----
+        ordenar = request.query_params.get("ordenar")      # mesa | variedad | medida | fecha
+        fecha_exacta = request.query_params.get("fecha")   # YYYY-MM-DD
+        fecha_desde = request.query_params.get("desde")    # YYYY-MM-DD
+        fecha_hasta = request.query_params.get("hasta")    # YYYY-MM-DD
+        reciente = request.query_params.get("reciente")    # true / false
+
+        rendimientos = Rendimiento.objects.all()
+
+        # ----- FILTRO POR FECHA EXACTA -----
+        if fecha_exacta:
+            rendimientos = rendimientos.filter(fecha_entrada__date=fecha_exacta)
+
+        # ----- FILTRO POR RANGO DE FECHAS -----
+        if fecha_desde and fecha_hasta:
+            rendimientos = rendimientos.filter(
+                fecha_entrada__date__range=[fecha_desde, fecha_hasta]
+            )
+
+        # ----- ORDENAMIENTO FINAL (CORRECTO) -----
+        order_fields = []
+
+        # Campo a ordenar
+        if ordenar == "mesa":
+            order_fields.append("numero_mesa")
+        elif ordenar == "variedad":
+            order_fields.append("variedad")
+        elif ordenar == "medida":
+            order_fields.append("medida")
+        elif ordenar == "fecha":
+            order_fields.append("fecha_entrada")
+
+        # Dirección (reciente / antiguo)
+        if reciente == "true" and order_fields:
+            order_fields[0] = "-" + order_fields[0]
+        elif reciente == "true" and not order_fields:
+            order_fields.append("-fecha_entrada")
+        elif reciente == "false" and not order_fields:
+            order_fields.append("fecha_entrada")
+
+        # Aplicar UNA SOLA VEZ
+        if order_fields:
+            rendimientos = rendimientos.order_by(*order_fields)
+
+
+        # ----- RESPUESTA -----
         serializer = RendimientoSerializer(rendimientos, many=True)
         return Response(serializer.data)
+
 
     elif request.method == 'POST':
         data = request.data

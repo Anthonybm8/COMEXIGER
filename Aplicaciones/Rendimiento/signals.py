@@ -2,12 +2,10 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from .models import Rendimiento
 from .serializers import RendimientoSerializer
-
-
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Rendimiento
-from Aplicaciones.Disponibilidad.models import Disponibilidad
+
 
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -25,42 +23,4 @@ def notificar_rendimiento(rendimiento):
     )
 
 
-@receiver(post_save, sender=Rendimiento)
-def actualizar_disponibilidad(sender, instance, created, **kwargs):
-    """
-    Actualiza o crea una disponibilidad cada vez que se guarda un rendimiento.
-    """
 
-    if not created:
-        return  
-
-    numero_mesa = instance.numero_mesa  
-    variedad = instance.variedad
-    medida = instance.medida
-
-    disponibilidad, creada = Disponibilidad.objects.get_or_create(
-        numero_mesa=numero_mesa,
-        variedad=variedad,
-        medida=medida,
-        defaults={
-            'stock': 1,
-            'fecha_entrada': instance.fecha_entrada
-        }
-    )
-
-    if not creada:
-        disponibilidad.stock += 1
-        disponibilidad.save()
-
-    # ----- WEBSOCKET -----
-    layer = get_channel_layer()
-    async_to_sync(layer.group_send)(
-        "disponibilidad_group",
-        {
-            "type": "stock.update",
-            "mesa": numero_mesa,
-            "variedad": variedad,
-            "medida": medida,
-            "stock": disponibilidad.stock
-        }
-    )

@@ -11,6 +11,67 @@
         </a>
     </div>
     <hr>
+    <!-- FILTROS Y ORDENAMIENTOS -->
+    <div class="card p-3 mb-4">
+        <div class="row g-3">
+
+            <!-- Ordenar por -->
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Ordenar por</label>
+                <select id="ordenarPor" class="form-select">
+                    <option value="">-- Seleccionar --</option>
+                    <option value="mesa">Mesa</option>
+                    <option value="variedad">Variedad</option>
+                    <option value="medida">Medida</option>
+                    <option value="fecha">Fecha</option>
+                </select>
+            </div>
+
+            <!-- Más recientes / más antiguos -->
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Mostrar</label>
+                <select id="ordenReciente" class="form-select">
+                    <option value="">-- Seleccionar --</option>
+                    <option value="true">Más recientes primero</option>
+                    <option value="false">Más antiguos primero</option>
+                </select>
+            </div>
+
+            <!-- Fecha exacta -->
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Fecha exacta</label>
+                <input type="date" id="fechaExacta" class="form-control">
+            </div>
+
+            <!-- Rango desde -->
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Desde</label>
+                <input type="date" id="fechaDesde" class="form-control">
+            </div>
+
+            <!-- Rango hasta -->
+            <div class="col-md-3 mt-3">
+                <label class="form-label fw-bold">Hasta</label>
+                <input type="date" id="fechaHasta" class="form-control">
+            </div>
+
+            <!-- Botón aplicar -->
+            <div class="col-md-3 mt-4">
+                <button id="btnAplicarFiltros" class="btn btn-primary w-100">
+                    <i class="fa fa-filter"></i> Aplicar filtros
+                </button>
+            </div>
+
+            <!-- Botón limpiar -->
+            <div class="col-md-3 mt-4">
+                <button id="btnLimpiarFiltros" class="btn btn-secondary w-100">
+                    <i class="fa fa-eraser"></i> Limpiar
+                </button>
+            </div>
+
+        </div>
+    </div>
+
 
     <table id="table_rendimiento">
         <thead>
@@ -32,13 +93,11 @@
             <tr>
                 <!-- COLUMNA OCULTA ISO -->
                 <td style="display:none;">{{ r.fecha_entrada|date:"Y-m-d\\TH:i" }}</td>
-
                 <td>{{ r.id }}</td>
                 <td>{{ r.numero_mesa }}</td>
                 <td>{{ r.variedad }}</td>
                 <td>{{ r.medida }}</td>
                 <td>{{ r.bonches }}</td>
-
                 <td data-fecha="{{ r.fecha_entrada }}">{{ r.fecha_entrada }}</td>
                 <td>{{ r.fecha_salida|default:"-" }}</td>
 
@@ -114,11 +173,35 @@
 </main>
 
 <script>
+// =======================
+// FUNCIONES GLOBALES
+// =======================
+function formatearFechaLarga(iso) {
+    if (!iso) return "-";
+
+    const fecha = new Date(iso);
+    const opciones = {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    };
+
+    return fecha.toLocaleString("es-EC", opciones)
+                .replace(" 0", " ")
+                .replace(",", "");
+}
+
+// =======================
+// INICIALIZACIÓN DE DATATABLES
+// =======================
 let table;
 
 $(document).ready(function() {
-
     table = $('#table_rendimiento').DataTable({
+        order: [],
+        ordering: false,
         responsive: true,
         dom: 'lBfrtip',
         buttons: [
@@ -129,128 +212,140 @@ $(document).ready(function() {
             { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir' }
         ],
         columnDefs: [
-            { targets: 0, visible: false }   // ← CORRECTO
+            { targets: 0, visible: false }   // columna oculta ISO
         ],
         language: {
             url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
         }
     });
-    function formatearFechaLarga(iso) {
-        if (!iso) return "-";
 
-        const fecha = new Date(iso);
-        const opciones = {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        };
-
-        // Convertir a español Ecuador
-        return fecha.toLocaleString("es-EC", opciones)
-                    .replace(" 0", " ")           // quita cero innecesario en día/hora
-                    .replace(",", "");             // elimina coma después del mes
-    }
-
+    // =======================
     // WEBSOCKET
+    // =======================
     const ws = new WebSocket(
         (location.protocol === "https:" ? "wss" : "ws") + "://localhost:8000/ws/rendimientos/"
     );
 
     ws.onmessage = function(e) {
         const data = JSON.parse(e.data);
-
-        console.log("==== WS RECIBIDO ====");
-        console.log("Mesa:", data.numero_mesa);
-        console.log("Variedad:", data.variedad);
-        console.log("Medida:", data.medida);
-        console.log("Fecha entrada:", data.fecha_entrada);
-
         // Normalizar datos entrantes
         const incomingMesa  = parseInt(data.numero_mesa);
         const incomingVar   = (data.variedad || "").toLowerCase().trim();
         const incomingMed   = (data.medida || "").toLowerCase().trim();
         const incomingFecha = (data.fecha_entrada || "").split("T")[0];
 
-        console.log("Fecha ISO procesada:", incomingFecha);
-
         let filaExistente = null;
-
-        console.log("=== BUSCANDO FILA COINCIDENTE ===");
 
         table.rows().every(function() {
             const row = this.data();
-
-            // OJO: índices basados en tu tabla
-            const rowFechaISO = ("" + row[0]).split("T")[0]; 
+            const rowFechaISO = ("" + row[0]).split("T")[0];
             const rowMesa = parseInt(row[2]);
             const rowVar  = (row[3] || "").toLowerCase().trim();
             const rowMed  = (row[4] || "").toLowerCase().trim();
 
-
-            console.log("------------------------------");
-            console.log("Revisando fila:");
-            console.log("Fila Mesa:", rowMesa, " | Incoming:", incomingMesa);
-            console.log("Fila Var:",  rowVar,  " | Incoming:", incomingVar);
-            console.log("Fila Med:",  rowMed,  " | Incoming:", incomingMed);
-            console.log("Fila Fecha:", rowFechaISO, " | Incoming:", incomingFecha);
-
-            const cmpMesa  = (rowMesa === incomingMesa);
-            const cmpVar   = (rowVar === incomingVar);
-            const cmpMed   = (rowMed === incomingMed);
-            const cmpFecha = (rowFechaISO === incomingFecha);
-
-            console.log("Coincidencias => Mesa:", cmpMesa, " Var:", cmpVar, " Med:", cmpMed, " Fecha:", cmpFecha);
-
-            if (cmpMesa && cmpVar && cmpMed && cmpFecha) {
-                console.log(">>> FILA COINCIDENTE ENCONTRADA");
+            if (rowMesa === incomingMesa && rowVar === incomingVar &&
+                rowMed === incomingMed && rowFechaISO === incomingFecha) {
                 filaExistente = this;
-                return false;
+                return false; 
             }
         });
 
-        // SI EXISTE → ACTUALIZAR BONCHES
         if (filaExistente) {
             const rowData = filaExistente.data();
             const bonchesActuales = parseInt(rowData[5]) || 0;
-
-            console.log("Actualizando bonches:");
-            console.log("Bonches actuales:", bonchesActuales);
-            console.log("Bonches entrantes:", data.bonches);
-
-            // Aquí decides si SUMA 1 o SUMA lo que diga el WS
-            rowData[5] = bonchesActuales + 1;
-
+            rowData[5] = bonchesActuales + 1; // sumar bonches
             filaExistente.data(rowData).draw(false);
-            console.log(">>> FILA ACTUALIZADA");
             return;
         }
 
-        console.log(">>> NO SE ENCONTRÓ FILA COINCIDENTE — CREANDO NUEVA");
-
-        // SI NO EXISTE → CREAR FILA NUEVA
+        // Si no existe fila, crear nueva
         table.row.add([
-            data.fecha_entrada,             // 0 Fecha ISO (oculta)
-            data.id,                        // 1 ID
-            data.numero_mesa,               // 2 Mesa
-            data.variedad,                  // 3 Variedad
-            data.medida,                    // 4 Medida
-            data.bonches,                   // 5 Bonches
-            formatearFechaLarga(data.fecha_entrada),             // 6 Fecha entrada
-            data.fecha_salida || "-",       // 7 Fecha salida
+            data.fecha_entrada,                  // 0 Fecha ISO (oculta)
+            data.id,                             // 1 ID
+            data.numero_mesa,                    // 2 Mesa
+            data.variedad,                       // 3 Variedad
+            data.medida,                         // 4 Medida
+            data.bonches,                        // 5 Bonches
+            formatearFechaLarga(data.fecha_entrada), // 6 Fecha entrada
+            data.fecha_salida || "-",            // 7 Fecha salida
             `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
-            <a href="/rendimiento/eliminar/${data.id}/" class="btn btn-outline-danger">
-            <i class="fa fa-trash"></i></a>` // 8 Acciones
+             <a href="/rendimiento/eliminar/${data.id}/" class="btn btn-outline-danger">
+             <i class="fa fa-trash"></i></a>`   // 8 Acciones
         ]).draw(false);
-
-
-        console.log(">>> FILA NUEVA AGREGADA");
     };
+});
 
+// =======================
+// FILTROS Y ORDENAMIENTO
+// =======================
+document.getElementById("btnAplicarFiltros").addEventListener("click", function () {
+    let ordenar = document.getElementById("ordenarPor").value;
+    let reciente = document.getElementById("ordenReciente").value;
+    let fecha = document.getElementById("fechaExacta").value;
+    let desde = document.getElementById("fechaDesde").value;
+    let hasta = document.getElementById("fechaHasta").value;
 
+    let url = "/api/rendimientos/?";
+
+    if (ordenar) url += `ordenar=${ordenar}&`;
+    if (reciente) url += `reciente=${reciente}&`;
+    if (fecha) url += `fecha=${fecha}&`;
+    if (desde && hasta) url += `desde=${desde}&hasta=${hasta}&`;
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            table.clear();
+            data.forEach(item => {
+                table.row.add([
+                    item.fecha_entrada,
+                    item.id,
+                    item.numero_mesa,
+                    item.variedad,
+                    item.medida,
+                    item.bonches,
+                    formatearFechaLarga(item.fecha_entrada),
+                    item.fecha_salida || "-",
+                    `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
+                     <a href="/rendimiento/eliminar/${item.id}/" class="btn btn-outline-danger">
+                     <i class="fa fa-trash"></i></a>`
+                ]);
+            });
+            table.draw(false);
+        });
+});
+
+document.getElementById("btnLimpiarFiltros").addEventListener("click", function () {
+    document.getElementById("ordenarPor").value = "";
+    document.getElementById("ordenReciente").value = "";
+    document.getElementById("fechaExacta").value = "";
+    document.getElementById("fechaDesde").value = "";
+    document.getElementById("fechaHasta").value = "";
+
+    fetch("/api/rendimientos/")
+        .then(r => r.json())
+        .then(data => {
+            table.clear();
+            data.forEach(item => {
+                table.row.add([
+                    item.fecha_entrada,
+                    item.id,
+                    item.numero_mesa,
+                    item.variedad,
+                    item.medida,
+                    item.bonches,
+                    formatearFechaLarga(item.fecha_entrada),
+                    item.fecha_salida || "-",
+                    `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
+                     <a href="/rendimiento/eliminar/${item.id}/" class="btn btn-outline-danger">
+                     <i class="fa fa-trash"></i></a>`
+                ]);
+            });
+            table.draw(false);
+        });
 });
 </script>
+
 
 <br><br>
 {% endblock %}
