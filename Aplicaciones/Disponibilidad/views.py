@@ -105,8 +105,6 @@ def api_disponibilidad_list(request):
         desde = request.query_params.get("desde")
         hasta = request.query_params.get("hasta")
         reciente = request.query_params.get("reciente")
-        
-        
 
         qs = Disponibilidad.objects.all()
 
@@ -131,7 +129,6 @@ def api_disponibilidad_list(request):
 
         return Response(DisponibilidadSerializer(qs, many=True).data)
 
-    # ---------- POST ----------
     elif request.method == 'POST':
 
         data = request.data
@@ -143,8 +140,15 @@ def api_disponibilidad_list(request):
         if not codigo or not mesa or not variedad or not medida:
             return Response({"error": "Datos incompletos"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 🔹 Registrar QR sin bloquear
-        QRDisponibilidadUsado.objects.get_or_create(qr_id=codigo)
+        # ⛔ BLOQUEO GLOBAL Y PERMANENTE
+        if QRDisponibilidadUsado.objects.filter(qr_id=codigo).exists():
+            return Response(
+                {"error": "Este QR ya fue utilizado en Disponibilidad"},
+                status=status.HTTP_409_CONFLICT
+            )
+
+        # Guardar QR para siempre
+        QRDisponibilidadUsado.objects.create(qr_id=codigo)
 
         hoy = timezone.localdate()
 
@@ -158,6 +162,7 @@ def api_disponibilidad_list(request):
         if existente:
             existente.stock += 1
             existente.save()
+
             async_to_sync(get_channel_layer().group_send)(
                 "disponibilidad",
                 {
@@ -186,6 +191,7 @@ def api_disponibilidad_list(request):
         return Response(DisponibilidadSerializer(nuevo).data, status=201)
 
 
+    
 @api_view(['GET', 'PUT', 'DELETE'])
 def api_disponibilidad_detail(request, pk):
     try:
@@ -228,3 +234,16 @@ def api_disponibilidad_stats(request):
                             .distinct()
                             .count()
     })
+
+@api_view(['GET'])
+def api_disponibilidad_stats(request):
+    return Response({
+        "total_registros": Disponibilidad.objects.count(),
+        "registros_activos": Disponibilidad.objects.filter(fecha_salida__isnull=True).count(),
+        "stock_total": Disponibilidad.objects.aggregate(Sum('stock'))['stock__sum'] or 0,
+        "mesas_activas": Disponibilidad.objects.filter(fecha_salida__isnull=True)
+                            .values('numero_mesa')
+                            .distinct()
+                            .count()
+    })
+    
