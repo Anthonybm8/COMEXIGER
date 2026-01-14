@@ -1,6 +1,14 @@
 from django.db import models
 from django.utils import timezone
 
+class QRDisponibilidadUsado(models.Model):
+    qr_id = models.CharField(max_length=255, unique=True)
+    fecha_escaneo = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.qr_id
+
+
 class Disponibilidad(models.Model):
     numero_mesa = models.PositiveIntegerField(verbose_name="Número de mesa")
     variedad = models.CharField(max_length=100)

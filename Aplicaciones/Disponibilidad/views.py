@@ -13,6 +13,8 @@ from rest_framework.response import Response
 
 from .models import Disponibilidad
 from .serializers import DisponibilidadSerializer
+from .models import Disponibilidad, QRDisponibilidadUsado
+
 
 
 def inicio(request):
@@ -94,17 +96,17 @@ class DisponibilidadViewSet(viewsets.ModelViewSet):
 # =========================
 # API MANUAL
 # =========================
-
 @api_view(['GET', 'POST'])
 def api_disponibilidad_list(request):
 
     if request.method == 'GET':
-
         ordenar = request.query_params.get("ordenar")
         fecha = request.query_params.get("fecha")
         desde = request.query_params.get("desde")
         hasta = request.query_params.get("hasta")
         reciente = request.query_params.get("reciente")
+        
+        
 
         qs = Disponibilidad.objects.all()
 
@@ -129,12 +131,20 @@ def api_disponibilidad_list(request):
 
         return Response(DisponibilidadSerializer(qs, many=True).data)
 
+    # ---------- POST ----------
     elif request.method == 'POST':
 
         data = request.data
+        codigo = data.get("qr_id")
         mesa = data.get("numero_mesa")
         variedad = data.get("variedad")
         medida = data.get("medida")
+
+        if not codigo or not mesa or not variedad or not medida:
+            return Response({"error": "Datos incompletos"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 🔹 Registrar QR sin bloquear
+        QRDisponibilidadUsado.objects.get_or_create(qr_id=codigo)
 
         hoy = timezone.localdate()
 
@@ -148,7 +158,6 @@ def api_disponibilidad_list(request):
         if existente:
             existente.stock += 1
             existente.save()
-
             async_to_sync(get_channel_layer().group_send)(
                 "disponibilidad",
                 {
@@ -156,7 +165,6 @@ def api_disponibilidad_list(request):
                     "data": DisponibilidadSerializer(existente).data
                 }
             )
-
             return Response(DisponibilidadSerializer(existente).data, status=200)
 
         nuevo = Disponibilidad.objects.create(
@@ -176,6 +184,7 @@ def api_disponibilidad_list(request):
         )
 
         return Response(DisponibilidadSerializer(nuevo).data, status=201)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def api_disponibilidad_detail(request, pk):
