@@ -1,28 +1,32 @@
-"""
-URL configuration for COMEXIGER project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 from django.urls import reverse_lazy
 
+# Importar APIs directamente
+from Aplicaciones.Usuario.api_views import registrar_usuario_api, login_usuario_api
+
 urlpatterns = [
-    path('', RedirectView.as_view(url=reverse_lazy('usuariore'), permanent=False)), 
+    # Redirección
+    path('', RedirectView.as_view(url=reverse_lazy('iniciose'), permanent=False)),
+    
+    # Admin
     path('admin/', admin.site.urls),
-    path('', include('Aplicaciones.Disponibilidad.urls')), 
-    path('', include('Aplicaciones.Usuario.urls')),
+    
+    # Apps normales (web) - INCLUYE Usuario.urls también
+    path('', include('Aplicaciones.Disponibilidad.urls')),
+    path('', include('Aplicaciones.Usuario.urls')),  # ¡AHORA SÍ!
     path('', include('Aplicaciones.Rendimiento.urls')),
+    
+    # 🔥 RUTAS API PARA FLUTTER - SIN 'Usuario/' en el path
+    path('api/registrar/', registrar_usuario_api, name='api_registrar'),
+    path('api/login/', login_usuario_api, name='api_login'),
 ]
+
+# Debug
+print("="*60)
+print("✅ SERVIDOR DJANGO INICIADO")
+print("✅ APIs DISPONIBLES:")
+print("   • POST http://localhost:8000/api/registrar/")
+print("   • POST http://localhost:8000/api/login/")
+print("="*60)

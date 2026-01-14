@@ -29,20 +29,17 @@ def nuevo_rendimiento(request):
 def guardar_rendimiento(request):
     if request.method == "POST":
         numero_mesa = request.POST["numero_mesa"]
-        variedad = request.POST["variedad"]
-        medida = request.POST["medida"]
-        bonches = int(request.POST["bonches"])
         fecha_entrada = request.POST["fecha_entrada"]
-        fecha_salida = request.POST["fecha_salida"]
+        bonches = int(request.POST.get("bonches", 0))
 
         nuevo = Rendimiento.objects.create(
             numero_mesa=numero_mesa,
-            variedad=variedad,
-            medida=medida,
-            bonches=bonches,
             fecha_entrada=fecha_entrada,
-            fecha_salida=fecha_salida if fecha_salida else None
+            bonches=bonches
         )
+
+        nuevo.recalcular()
+        nuevo.save()
 
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
@@ -73,22 +70,22 @@ def procesar_edicion_rendimiento(request):
             rendimiento = Rendimiento.objects.get(id=request.POST["id"])
 
             rendimiento.numero_mesa = request.POST["numero_mesa"]
-            rendimiento.variedad = request.POST["variedad"]
-            rendimiento.medida = request.POST["medida"]
-            rendimiento.bonches = int(request.POST["bonches"])
+            rendimiento.bonches = int(request.POST.get("bonches", 0))
 
             if request.POST.get("fecha_entrada"):
-                rendimiento.fecha_entrada = datetime.strptime(
-                    request.POST["fecha_entrada"], "%Y-%m-%dT%H:%M"
+                rendimiento.fecha_entrada = request.POST["fecha_entrada"]
+
+            if request.POST.get("hora_inicio"):
+                rendimiento.hora_inicio = datetime.strptime(
+                    request.POST["hora_inicio"], "%Y-%m-%dT%H:%M"
                 )
 
-            if request.POST.get("fecha_salida"):
-                rendimiento.fecha_salida = datetime.strptime(
-                    request.POST["fecha_salida"], "%Y-%m-%dT%H:%M"
+            if request.POST.get("hora_final"):
+                rendimiento.hora_final = datetime.strptime(
+                    request.POST["hora_final"], "%Y-%m-%dT%H:%M"
                 )
-            else:
-                rendimiento.fecha_salida = None
 
+            rendimiento.recalcular()
             rendimiento.save()
 
             channel_layer = get_channel_layer()
@@ -179,10 +176,10 @@ def api_rendimiento_list(request):
 
     codigo = data.get("qr_id")
     mesa = data.get("numero_mesa")
-    variedad = data.get("variedad")
-    medida = data.get("medida")
+    fecha_flor = data.get("fecha_entrada") or timezone.localdate()
 
-    if not codigo or not mesa or not variedad or not medida:
+    if not codigo or not mesa:
+
         return Response(
             {"error": "Datos incompletos"},
             status=status.HTTP_400_BAD_REQUEST
@@ -202,13 +199,14 @@ def api_rendimiento_list(request):
 
     existente = Rendimiento.objects.filter(
         numero_mesa=mesa,
-        variedad=variedad,
-        medida=medida,
-        fecha_entrada__date=hoy
+        fecha_entrada=fecha_flor
     ).first()
+
+
 
     if existente:
         existente.bonches += 1
+        existente.recalcular()
         existente.save()
 
         channel_layer = get_channel_layer()
@@ -225,11 +223,12 @@ def api_rendimiento_list(request):
     nuevo = Rendimiento.objects.create(
         qr_id=codigo,
         numero_mesa=mesa,
-        variedad=variedad,
-        medida=medida,
-        bonches=1,
-        fecha_entrada=timezone.now()
+        fecha_entrada=fecha_flor,
+        bonches=1
     )
+
+    nuevo.recalcular()
+    nuevo.save()
 
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(

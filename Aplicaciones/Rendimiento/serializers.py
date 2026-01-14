@@ -6,7 +6,3 @@ class RendimientoSerializer(serializers.ModelSerializer):
         model = Rendimiento
         fields = '__all__'
 
-class RendimientoCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Rendimiento
-        fields = ['qr_id', 'numero_mesa', 'variedad', 'medida']

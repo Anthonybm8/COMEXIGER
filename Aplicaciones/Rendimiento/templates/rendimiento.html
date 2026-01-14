@@ -78,12 +78,16 @@
             <tr class="table-success">
                 <th style="display:none;">Fecha ISO</th>
                 <th>ID</th>
-                <th>Número de Mesa</th>
-                <th>Variedad</th>
-                <th>Medida</th>
-                <th>Bonches</th>
-                <th>Fecha de Entrada</th>
-                <th>Fecha de Salida</th>
+                <th>Mesa</th>
+                <th>Rendimiento</th>
+                <th>Inicio</th>
+                <th>Final</th>
+                <th>Horas</th>
+                <th>Base</th>
+                <th>Esperados</th>
+                <th>Reales</th>
+                <th>Extras</th>
+                <th>Ext/Hora</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -91,27 +95,27 @@
         <tbody>
             {% for r in rendimiento %}
             <tr>
-                <!-- COLUMNA OCULTA ISO -->
                 <td style="display:none;">{{ r.fecha_entrada|date:"Y-m-d\\TH:i" }}</td>
                 <td>{{ r.id }}</td>
                 <td>{{ r.numero_mesa }}</td>
-                <td>{{ r.variedad }}</td>
-                <td>{{ r.medida }}</td>
+                <td>{{ r.rendimiento }}</td>
+                <td>{{ r.hora_inicio }}</td>
+                <td>{{ r.hora_final }}</td>
+                <td>{{ r.horas_trabajadas }}</td>
+                <td>{{ r.ramos_base }}</td>
+                <td>{{ r.ramos_esperados }}</td>
                 <td>{{ r.bonches }}</td>
-                <td data-fecha="{{ r.fecha_entrada }}">{{ r.fecha_entrada }}</td>
-                <td>{{ r.fecha_salida|default:"-" }}</td>
-
+                <td>{{ r.ramos_extras }}</td>
+                <td>{{ r.extras_por_hora }}</td>
                 <td>
                     <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEditar{{ r.id }}">
                         <i class="fa fa-pen"></i>
                     </button>
-
                     <a href="{% url 'eliminar_rendimiento' r.id %}" class="btn btn-outline-danger"
                         onclick="return confirm('¿Seguro que deseas eliminar este rendimiento?')">
                         <i class="fa fa-trash"></i>
                     </a>
 
-                    <!-- Modal -->
                     <div class="modal fade" id="modalEditar{{ r.id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content">
@@ -128,14 +132,32 @@
                                         <label>Número de Mesa</label>
                                         <input class="form-control" type="number" name="numero_mesa" value="{{ r.numero_mesa }}" required><br>
 
-                                        <label>Variedad</label>
-                                        <input class="form-control" type="text" name="variedad" value="{{ r.variedad }}" required><br>
+                                        <label>Rendimiento</label>
+                                        <input class="form-control" type="text" name="rendimiento" value="{{ r.rendimiento }}" required><br>
 
-                                        <label>Medida</label>
-                                        <input class="form-control" type="text" name="medida" value="{{ r.medida }}" required><br>
+                                        <label>Inicio</label>
+                                        <input class="form-control" type="text" name="hora_inicio" value="{{ r.hora_inicio }}"><br>
 
-                                        <label>Bonches</label>
-                                        <input class="form-control" type="number" name="bonches" value="{{ r.bonches }}" required><br>
+                                        <label>Final</label>
+                                        <input class="form-control" type="text" name="hora_final" value="{{ r.hora_final }}"><br>
+
+                                        <label>Horas</label>
+                                        <input class="form-control" type="text" name="horas_trabajadas" value="{{ r.horas_trabajadas }}"><br>
+
+                                        <label>Base</label>
+                                        <input class="form-control" type="text" name="ramos_base" value="{{ r.ramos_base }}"><br>
+
+                                        <label>Esperados</label>
+                                        <input class="form-control" type="text" name="ramos_esperados" value="{{ r.ramos_esperados }}"><br>
+
+                                        <label>Reales (Bonches)</label>
+                                        <input class="form-control" type="number" name="bonches" value="{{ r.bonches }}"><br>
+
+                                        <label>Extras</label>
+                                        <input class="form-control" type="text" name="ramos_extras" value="{{ r.ramos_extras }}"><br>
+
+                                        <label>Ext/Hora</label>
+                                        <input class="form-control" type="text" name="extras_por_hora" value="{{ r.extras_por_hora }}"><br>
 
                                         <label>Fecha de Entrada</label>
                                         <input class="form-control" type="datetime-local" name="fecha_entrada"
@@ -159,7 +181,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Fin Modal -->
 
                 </td>
             </tr>
@@ -169,28 +190,15 @@
 </main>
 
 <script>
-// =======================
-// FUNCIONES GLOBALES
-// =======================
 function formatearFechaLarga(iso) {
     if (!iso) return "-";
 
     const fecha = new Date(iso);
-    const opciones = {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    };
-
-    return fecha.toLocaleString("es-EC", opciones)
-                .replace(" 0", " ")
-                .replace(",", "");
+    const opciones = { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" };
+    return fecha.toLocaleString("es-EC", opciones).replace(" 0", " ").replace(",", "");
 }
 
 let table;
-
 $(document).ready(function() {
     table = $('#table_rendimiento').DataTable({
         order: [],
@@ -204,143 +212,65 @@ $(document).ready(function() {
             { extend: 'pdf', text: '<i class="fa fa-file-pdf"></i> PDF' },
             { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir' }
         ],
-        columnDefs: [
-            { targets: 0, visible: false }   // columna oculta ISO
-        ],
-        language: {
-            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
-        }
+        columnDefs: [ { targets: 0, visible: false } ],
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' }
     });
-    window.tableRendimientodReady = true;
-
 
     // =======================
     // WEBSOCKET
     // =======================
-    const ws = new WebSocket(
-        (location.protocol === "https:" ? "wss" : "ws") + "://localhost:8000/ws/rendimientos/"
-    );
+    const ws = new WebSocket((location.protocol === "https:" ? "wss" : "ws") + "://localhost:8000/ws/rendimientos/");
+    ws.onopen = () => console.log("WebSocket conectado correctamente");
+    ws.onclose = () => console.log("WebSocket desconectado");
+    ws.onerror = (err) => console.error("Error WebSocket", err);
 
     ws.onmessage = function(e) {
         const data = JSON.parse(e.data);
-        // Normalizar datos entrantes
+
         const incomingMesa  = parseInt(data.numero_mesa);
-        const incomingVar   = (data.variedad || "").toLowerCase().trim();
-        const incomingMed   = (data.medida || "").toLowerCase().trim();
+        const incomingRend  = (data.rendimiento || "").toLowerCase().trim();
         const incomingFecha = (data.fecha_entrada || "").split("T")[0];
 
         let filaExistente = null;
-
         table.rows().every(function() {
             const row = this.data();
             const rowFechaISO = ("" + row[0]).split("T")[0];
             const rowMesa = parseInt(row[2]);
-            const rowVar  = (row[3] || "").toLowerCase().trim();
-            const rowMed  = (row[4] || "").toLowerCase().trim();
+            const rowRend = (row[3] || "").toLowerCase().trim();
 
-            if (rowMesa === incomingMesa && rowVar === incomingVar &&
-                rowMed === incomingMed && rowFechaISO === incomingFecha) {
+            if (rowMesa === incomingMesa && rowRend === incomingRend && rowFechaISO === incomingFecha) {
                 filaExistente = this;
-                return false; 
+                return false;
             }
         });
 
         if (filaExistente) {
             const rowData = filaExistente.data();
-            const bonchesActuales = parseInt(rowData[5]) || 0;
-            rowData[5] = bonchesActuales + 1; // sumar bonches
+            const bonchesActuales = parseInt(rowData[9]) || 0; // columna 9 = Reales
+            rowData[9] = bonchesActuales + (parseInt(data.bonches) || 0);
             filaExistente.data(rowData).draw(false);
             return;
         }
 
-        // Si no existe fila, crear nueva
         table.row.add([
-            data.fecha_entrada,                  // 0 Fecha ISO (oculta)
-            data.id,                             // 1 ID
-            data.numero_mesa,                    // 2 Mesa
-            data.variedad,                       // 3 Variedad
-            data.medida,                         // 4 Medida
-            data.bonches,                        // 5 Bonches
-            formatearFechaLarga(data.fecha_entrada), // 6 Fecha entrada
-            data.fecha_salida || "-",            // 7 Fecha salida
+            data.fecha_entrada,                        // 0 Fecha ISO
+            data.id,                                   // 1 ID
+            data.numero_mesa,                          // 2 Mesa
+            data.rendimiento,                          // 3 Rendimiento
+            data.hora_inicio || "-",                    // 4 Inicio
+            data.hora_final || "-",                     // 5 Final
+            data.horas_trabajadas || "-",               // 6 Horas
+            data.ramos_base || "-",                     // 7 Base
+            data.ramos_esperados || "-",                // 8 Esperados
+            data.bonches || 0,                          // 9 Reales
+            data.ramos_extras || "-",                   // 10 Extras
+            data.extras_por_hora || "-",                // 11 Ext/Hora
             `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
              <a href="/rendimiento/eliminar/${data.id}/" class="btn btn-outline-danger">
-             <i class="fa fa-trash"></i></a>`   // 8 Acciones
+             <i class="fa fa-trash"></i></a>`           // 12 Acciones
         ]).draw(false);
     };
 });
-
-// =======================
-// FILTROS Y ORDENAMIENTO
-// =======================
-document.getElementById("btnAplicarFiltros").addEventListener("click", function () {
-    let ordenar = document.getElementById("ordenarPor").value;
-    let reciente = document.getElementById("ordenReciente").value;
-    let fecha = document.getElementById("fechaExacta").value;
-    let desde = document.getElementById("fechaDesde").value;
-    let hasta = document.getElementById("fechaHasta").value;
-
-    let url = "/api/rendimientos/?";
-
-    if (ordenar) url += `ordenar=${ordenar}&`;
-    if (reciente) url += `reciente=${reciente}&`;
-    if (fecha) url += `fecha=${fecha}&`;
-    if (desde && hasta) url += `desde=${desde}&hasta=${hasta}&`;
-
-    fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            table.clear();
-            data.forEach(item => {
-                table.row.add([
-                    item.fecha_entrada,
-                    item.id,
-                    item.numero_mesa,
-                    item.variedad,
-                    item.medida,
-                    item.bonches,
-                    formatearFechaLarga(item.fecha_entrada),
-                    item.fecha_salida || "-",
-                    `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
-                     <a href="/rendimiento/eliminar/${item.id}/" class="btn btn-outline-danger">
-                     <i class="fa fa-trash"></i></a>`
-                ]);
-            });
-            table.draw(false);
-        });
-});
-
-document.getElementById("btnLimpiarFiltros").addEventListener("click", function () {
-    document.getElementById("ordenarPor").value = "";
-    document.getElementById("ordenReciente").value = "";
-    document.getElementById("fechaExacta").value = "";
-    document.getElementById("fechaDesde").value = "";
-    document.getElementById("fechaHasta").value = "";
-
-    fetch("/api/rendimientos/")
-        .then(r => r.json())
-        .then(data => {
-            table.clear();
-            data.forEach(item => {
-                table.row.add([
-                    item.fecha_entrada,
-                    item.id,
-                    item.numero_mesa,
-                    item.variedad,
-                    item.medida,
-                    item.bonches,
-                    formatearFechaLarga(item.fecha_entrada),
-                    item.fecha_salida || "-",
-                    `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
-                     <a href="/rendimiento/eliminar/${item.id}/" class="btn btn-outline-danger">
-                     <i class="fa fa-trash"></i></a>`
-                ]);
-            });
-            table.draw(false);
-        });
-});
 </script>
-
-
 <br><br>
 {% endblock %}

@@ -191,7 +191,6 @@ def api_disponibilidad_list(request):
         return Response(DisponibilidadSerializer(nuevo).data, status=201)
 
 
-    
 @api_view(['GET', 'PUT', 'DELETE'])
 def api_disponibilidad_detail(request, pk):
     try:
@@ -235,15 +234,3 @@ def api_disponibilidad_stats(request):
                             .count()
     })
 
-@api_view(['GET'])
-def api_disponibilidad_stats(request):
-    return Response({
-        "total_registros": Disponibilidad.objects.count(),
-        "registros_activos": Disponibilidad.objects.filter(fecha_salida__isnull=True).count(),
-        "stock_total": Disponibilidad.objects.aggregate(Sum('stock'))['stock__sum'] or 0,
-        "mesas_activas": Disponibilidad.objects.filter(fecha_salida__isnull=True)
-                            .values('numero_mesa')
-                            .distinct()
-                            .count()
-    })
-    
