@@ -1,5 +1,8 @@
-
+# Rendimiento/models.py
 from django.db import models
+from django.utils import timezone
+from datetime import datetime
+
 class QRUsado(models.Model):
     qr_id = models.CharField(max_length=255, unique=True)
     fecha_escaneo = models.DateTimeField(auto_now_add=True)
@@ -8,11 +11,10 @@ class QRUsado(models.Model):
         return self.qr_id
 
 class Rendimiento(models.Model):
-
     qr_id = models.CharField(max_length=255)
     numero_mesa = models.CharField(max_length=50)
-    fecha_entrada = models.DateTimeField() 
-
+    fecha_entrada = models.DateTimeField()
+    
     # Datos que llegan desde la app
     hora_inicio = models.DateTimeField(null=True, blank=True)
     hora_final = models.DateTimeField(null=True, blank=True)
@@ -21,7 +23,6 @@ class Rendimiento(models.Model):
     rendimiento = models.IntegerField(default=0)   
     ramos_base = models.IntegerField(default=0)    
 
-  
     bonches = models.IntegerField(default=0)       
 
     # Campos calculados (no se envían desde la app)
@@ -52,4 +53,48 @@ class Rendimiento(models.Model):
             self.ramos_extras = None
             self.extras_por_hora = None
 
+    def __str__(self):
+        return f"Mesa {self.numero_mesa} - {self.fecha_entrada.date()}"
 
+# 🔥 NUEVO MODELO: JornadaLaboral - Movido a Rendimiento
+class JornadaLaboral(models.Model):
+    ESTADOS = [
+        ('iniciada', 'Jornada Iniciada'),
+        ('finalizada', 'Jornada Finalizada'),
+    ]
+    
+    # Usaremos el username directamente en lugar de ForeignKey
+    usuario_username = models.CharField(max_length=150)
+    usuario_nombre = models.CharField(max_length=100)
+    mesa = models.CharField(max_length=100)
+    fecha = models.DateField(auto_now_add=True)
+    hora_inicio = models.DateTimeField()
+    hora_fin = models.DateTimeField(null=True, blank=True)
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='iniciada')
+    horas_trabajadas = models.FloatField(null=True, blank=True)
+    
+    class Meta:
+        # Un usuario solo puede tener una jornada por día
+        unique_together = [['usuario_username', 'fecha']]
+        ordering = ['-fecha', '-hora_inicio']
+    
+    def __str__(self):
+        return f"{self.usuario_username} - {self.fecha} ({self.estado})"
+    
+    def calcular_horas_trabajadas(self):
+        if self.hora_inicio and self.hora_fin:
+            delta = self.hora_fin - self.hora_inicio
+            # Restamos 1 hora de descanso si la jornada es mayor a 4 horas
+            horas_brutas = delta.total_seconds() / 3600
+            if horas_brutas > 4:
+                self.horas_trabajadas = round(horas_brutas - 1, 2)
+            else:
+                self.horas_trabajadas = round(horas_brutas, 2)
+        else:
+            self.horas_trabajadas = 0
+    
+    def save(self, *args, **kwargs):
+        if self.hora_fin:
+            self.calcular_horas_trabajadas()
+            self.estado = 'finalizada'
+        super().save(*args, **kwargs)
