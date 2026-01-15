@@ -196,10 +196,10 @@ def api_rendimiento_list(request):
     QRUsado.objects.create(qr_id=codigo)
 
     hoy = timezone.localdate()
-
+        
     existente = Rendimiento.objects.filter(
         numero_mesa=mesa,
-        fecha_entrada=fecha_flor
+        fecha_entrada__date=hoy
     ).first()
 
 
@@ -223,7 +223,7 @@ def api_rendimiento_list(request):
     nuevo = Rendimiento.objects.create(
         qr_id=codigo,
         numero_mesa=mesa,
-        fecha_entrada=fecha_flor,
+        fecha_entrada=timezone.now(),
         bonches=1
     )
 

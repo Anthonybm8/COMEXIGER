@@ -5,12 +5,8 @@
 <br>
 <main class="container py-4"><br><br>
     <h1 class="text-center">Listado de Rendimiento</h1>
-    <div class="text-center">
-        <a href="{% url 'nuevo_rendimiento' %}" class="btn btn-primary">
-            Nuevo Rendimiento
-        </a>
-    </div>
     <hr>
+
     <!-- FILTROS Y ORDENAMIENTOS -->
     <div class="card p-3 mb-4">
         <div class="row g-3">
@@ -21,8 +17,6 @@
                 <select id="ordenarPor" class="form-select">
                     <option value="">-- Seleccionar --</option>
                     <option value="mesa">Mesa</option>
-                    <option value="variedad">Variedad</option>
-                    <option value="medida">Medida</option>
                     <option value="fecha">Fecha</option>
                 </select>
             </div>
@@ -72,13 +66,15 @@
         </div>
     </div>
 
-
     <table id="table_rendimiento">
         <thead>
             <tr class="table-success">
-                <th style="display:none;">Fecha ISO</th>
+                <!-- ✅ GUARDAMOS SOLO LA FECHA (YYYY-MM-DD) PARA QUE NUNCA SE "SEPARA" AL RECARGAR -->
+                <th style="display:none;">Fecha Key</th>
+
                 <th>ID</th>
                 <th>Mesa</th>
+                <th>Fecha</th>
                 <th>Rendimiento</th>
                 <th>Inicio</th>
                 <th>Final</th>
@@ -95,24 +91,33 @@
         <tbody>
             {% for r in rendimiento %}
             <tr>
-                <td style="display:none;">{{ r.fecha_entrada|date:"Y-m-d\\TH:i" }}</td>
+                <!-- ✅ SOLO FECHA, NO datetime -->
+                <td style="display:none;">{{ r.fecha_entrada|date:"Y-m-d" }}</td>
+
                 <td>{{ r.id }}</td>
                 <td>{{ r.numero_mesa }}</td>
-                <td>{{ r.rendimiento }}</td>
-                <td>{{ r.hora_inicio }}</td>
-                <td>{{ r.hora_final }}</td>
-                <td>{{ r.horas_trabajadas }}</td>
-                <td>{{ r.ramos_base }}</td>
-                <td>{{ r.ramos_esperados }}</td>
-                <td>{{ r.bonches }}</td>
-                <td>{{ r.ramos_extras }}</td>
-                <td>{{ r.extras_por_hora }}</td>
+
+                <!-- ✅ FECHA BONITA (pero la key real está en la columna oculta) -->
+                <td>{{ r.fecha_entrada|date:"d \\d\\e F \\d\\e Y H:i" }}</td>
+
+                <!-- ✅ rendimiento base 20 si viene null -->
+                <td>{% if r.rendimiento %}{{ r.rendimiento }}{% else %}20{% endif %}</td>
+
+                <td>{{ r.hora_inicio|default:"-" }}</td>
+                <td>{{ r.hora_final|default:"-" }}</td>
+                <td>{{ r.horas_trabajadas|default:"-" }}</td>
+                <td>{{ r.ramos_base|default:"-" }}</td>
+                <td>{{ r.ramos_esperados|default:"-" }}</td>
+                <td>{{ r.bonches|default:"0" }}</td>
+                <td>{{ r.ramos_extras|default:"-" }}</td>
+                <td>{{ r.extras_por_hora|default:"-" }}</td>
+
                 <td>
                     <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEditar{{ r.id }}">
                         <i class="fa fa-pen"></i>
                     </button>
                     <a href="{% url 'eliminar_rendimiento' r.id %}" class="btn btn-outline-danger"
-                        onclick="return confirm('¿Seguro que deseas eliminar este rendimiento?')">
+                       onclick="return confirm('¿Seguro que deseas eliminar este rendimiento?')">
                         <i class="fa fa-trash"></i>
                     </a>
 
@@ -133,7 +138,7 @@
                                         <input class="form-control" type="number" name="numero_mesa" value="{{ r.numero_mesa }}" required><br>
 
                                         <label>Rendimiento</label>
-                                        <input class="form-control" type="text" name="rendimiento" value="{{ r.rendimiento }}" required><br>
+                                        <input class="form-control" type="text" name="rendimiento" value="{% if r.rendimiento %}{{ r.rendimiento }}{% else %}20{% endif %}" required><br>
 
                                         <label>Inicio</label>
                                         <input class="form-control" type="text" name="hora_inicio" value="{{ r.hora_inicio }}"><br>
@@ -190,15 +195,32 @@
 </main>
 
 <script>
+/**
+ * ✅ IMPORTANTE:
+ * - Para comparar y evitar duplicados, usamos SOLO "YYYY-MM-DD"
+ * - La hora NO importa para la lógica de "fila existente"
+ */
+
+// Devuelve "YYYY-MM-DD" desde ISO o Date
+function toDateKey(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return String(value).slice(0, 10); // fallback
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+}
+
 function formatearFechaLarga(iso) {
     if (!iso) return "-";
-
     const fecha = new Date(iso);
     const opciones = { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" };
     return fecha.toLocaleString("es-EC", opciones).replace(" 0", " ").replace(",", "");
 }
 
 let table;
+
 $(document).ready(function() {
     table = $('#table_rendimiento').DataTable({
         order: [],
@@ -212,65 +234,165 @@ $(document).ready(function() {
             { extend: 'pdf', text: '<i class="fa fa-file-pdf"></i> PDF' },
             { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir' }
         ],
-        columnDefs: [ { targets: 0, visible: false } ],
+        columnDefs: [{ targets: 0, visible: false }],
         language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' }
     });
 
     // =======================
     // WEBSOCKET
     // =======================
-    const ws = new WebSocket((location.protocol === "https:" ? "wss" : "ws") + "://localhost:8000/ws/rendimientos/");
-    ws.onopen = () => console.log("WebSocket conectado correctamente");
-    ws.onclose = () => console.log("WebSocket desconectado");
-    ws.onerror = (err) => console.error("Error WebSocket", err);
+    // ✅ usa host actual (evita problemas cuando no es localhost)
+    const ws = new WebSocket(
+        (location.protocol === "https:" ? "wss" : "ws") +
+        "://" + window.location.host + "/ws/rendimientos/"
+    );
 
     ws.onmessage = function(e) {
         const data = JSON.parse(e.data);
 
-        const incomingMesa  = parseInt(data.numero_mesa);
-        const incomingRend  = (data.rendimiento || "").toLowerCase().trim();
-        const incomingFecha = (data.fecha_entrada || "").split("T")[0];
+        const incomingMesa = parseInt(data.numero_mesa);
+        const incomingKey  = toDateKey(data.fecha_entrada); // ✅ SOLO FECHA
 
         let filaExistente = null;
+
         table.rows().every(function() {
             const row = this.data();
-            const rowFechaISO = ("" + row[0]).split("T")[0];
-            const rowMesa = parseInt(row[2]);
-            const rowRend = (row[3] || "").toLowerCase().trim();
 
-            if (rowMesa === incomingMesa && rowRend === incomingRend && rowFechaISO === incomingFecha) {
+            // row[0] = Fecha Key oculta (YYYY-MM-DD)
+            const rowKey  = String(row[0] || "");
+            const rowMesa = parseInt(row[2]);
+
+            if (rowMesa === incomingMesa && rowKey === incomingKey) {
                 filaExistente = this;
                 return false;
             }
         });
 
+        // ✅ Si existe: SUMAR Reales (bonches)
         if (filaExistente) {
             const rowData = filaExistente.data();
-            const bonchesActuales = parseInt(rowData[9]) || 0; // columna 9 = Reales
-            rowData[9] = bonchesActuales + (parseInt(data.bonches) || 0);
+            const actuales = parseInt(rowData[10]) || 0;
+            rowData[10] = actuales + 1;
             filaExistente.data(rowData).draw(false);
             return;
         }
 
+        // ✅ Si NO existe: crear fila
+        const rendimientoBase = (data.rendimiento !== null && data.rendimiento !== undefined && data.rendimiento !== "")
+            ? data.rendimiento
+            : 20;
+
         table.row.add([
-            data.fecha_entrada,                        // 0 Fecha ISO
-            data.id,                                   // 1 ID
-            data.numero_mesa,                          // 2 Mesa
-            data.rendimiento,                          // 3 Rendimiento
-            data.hora_inicio || "-",                    // 4 Inicio
-            data.hora_final || "-",                     // 5 Final
-            data.horas_trabajadas || "-",               // 6 Horas
-            data.ramos_base || "-",                     // 7 Base
-            data.ramos_esperados || "-",                // 8 Esperados
-            data.bonches || 0,                          // 9 Reales
-            data.ramos_extras || "-",                   // 10 Extras
-            data.extras_por_hora || "-",                // 11 Ext/Hora
+            incomingKey,                           // 0 Fecha Key (YYYY-MM-DD) ✅ CLAVE ESTABLE
+            data.id,                               // 1 ID
+            data.numero_mesa,                      // 2 Mesa
+            formatearFechaLarga(data.fecha_entrada), // 3 Fecha bonita
+            rendimientoBase,                       // 4 Rendimiento (base 20)
+            data.hora_inicio || "-",               // 5 Inicio
+            data.hora_final || "-",                // 6 Final
+            data.horas_trabajadas || "-",          // 7 Horas
+            data.ramos_base || "-",                // 8 Base
+            data.ramos_esperados || "-",           // 9 Esperados
+            data.bonches || 1,                     // 10 Reales
+            data.ramos_extras || "-",              // 11 Extras
+            data.extras_por_hora || "-",           // 12 Ext/Hora
             `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
              <a href="/rendimiento/eliminar/${data.id}/" class="btn btn-outline-danger">
-             <i class="fa fa-trash"></i></a>`           // 12 Acciones
+             <i class="fa fa-trash"></i></a>`      // 13 Acciones
         ]).draw(false);
     };
 });
+
+// =======================
+// FILTROS Y ORDENAMIENTO (mismo patrón que disponibilidad)
+// =======================
+document.getElementById("btnAplicarFiltros").addEventListener("click", function () {
+    let ordenar = document.getElementById("ordenarPor").value;
+    let reciente = document.getElementById("ordenReciente").value;
+    let fecha = document.getElementById("fechaExacta").value;
+    let desde = document.getElementById("fechaDesde").value;
+    let hasta = document.getElementById("fechaHasta").value;
+
+    let url = "/api/rendimientos/?";
+
+    if (ordenar) url += `ordenar=${ordenar}&`;
+    if (reciente) url += `reciente=${reciente}&`;
+    if (fecha) url += `fecha=${fecha}&`;
+    if (desde && hasta) url += `desde=${desde}&hasta=${hasta}&`;
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            table.clear();
+            data.forEach(item => {
+                const key = toDateKey(item.fecha_entrada);
+                const rendBase = (item.rendimiento !== null && item.rendimiento !== undefined && item.rendimiento !== "")
+                    ? item.rendimiento
+                    : 20;
+
+                table.row.add([
+                    key,
+                    item.id,
+                    item.numero_mesa,
+                    formatearFechaLarga(item.fecha_entrada),
+                    rendBase,
+                    item.hora_inicio || "-",
+                    item.hora_final || "-",
+                    item.horas_trabajadas || "-",
+                    item.ramos_base || "-",
+                    item.ramos_esperados || "-",
+                    item.bonches || 0,
+                    item.ramos_extras || "-",
+                    item.extras_por_hora || "-",
+                    `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
+                     <a href="/rendimiento/eliminar/${item.id}/" class="btn btn-outline-danger">
+                     <i class="fa fa-trash"></i></a>`
+                ]);
+            });
+            table.draw(false);
+        });
+});
+
+document.getElementById("btnLimpiarFiltros").addEventListener("click", function () {
+    document.getElementById("ordenarPor").value = "";
+    document.getElementById("ordenReciente").value = "";
+    document.getElementById("fechaExacta").value = "";
+    document.getElementById("fechaDesde").value = "";
+    document.getElementById("fechaHasta").value = "";
+
+    fetch("/api/rendimientos/")
+        .then(r => r.json())
+        .then(data => {
+            table.clear();
+            data.forEach(item => {
+                const key = toDateKey(item.fecha_entrada);
+                const rendBase = (item.rendimiento !== null && item.rendimiento !== undefined && item.rendimiento !== "")
+                    ? item.rendimiento
+                    : 20;
+
+                table.row.add([
+                    key,
+                    item.id,
+                    item.numero_mesa,
+                    formatearFechaLarga(item.fecha_entrada),
+                    rendBase,
+                    item.hora_inicio || "-",
+                    item.hora_final || "-",
+                    item.horas_trabajadas || "-",
+                    item.ramos_base || "-",
+                    item.ramos_esperados || "-",
+                    item.bonches || 0,
+                    item.ramos_extras || "-",
+                    item.extras_por_hora || "-",
+                    `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
+                     <a href="/rendimiento/eliminar/${item.id}/" class="btn btn-outline-danger">
+                     <i class="fa fa-trash"></i></a>`
+                ]);
+            });
+            table.draw(false);
+        });
+});
 </script>
+
 <br><br>
 {% endblock %}
