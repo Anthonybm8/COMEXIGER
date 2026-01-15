@@ -1,8 +1,9 @@
+# api_views.py
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import make_password
 import json
-from .models import Usuario
+from .models import Usuario, Mesa  # Asegúrate de importar Mesa también
 
 @csrf_exempt
 def registrar_usuario_api(request):
@@ -151,6 +152,83 @@ def login_usuario_api(request):
         return JsonResponse({
             "success": False,
             "error": "JSON inválido en el cuerpo de la solicitud"
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": f"Error del servidor: {str(e)}"
+        }, status=500)
+
+@csrf_exempt
+def obtener_mesas_api(request):
+    """
+    API para obtener todas las mesas registradas
+    GET: http://localhost:8000/api/mesas/
+    """
+    if request.method != "GET":
+        return JsonResponse({
+            "success": False,
+            "error": "Método no permitido. Use GET"
+        }, status=405)
+    
+    try:
+        # Obtener todas las mesas ordenadas por nombre
+        mesas = Mesa.objects.all().order_by('nombre')
+        
+        # Convertir a lista de diccionarios
+        mesas_list = []
+        for mesa in mesas:
+            mesas_list.append({
+                "id": mesa.id,
+                "nombre": mesa.nombre
+            })
+        
+        return JsonResponse({
+            "success": True,
+            "data": mesas_list,
+            "count": len(mesas_list)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": f"Error del servidor: {str(e)}"
+        }, status=500)
+
+@csrf_exempt
+def verificar_mesa_api(request):
+    """
+    API para verificar si una mesa existe
+    POST: http://localhost:8000/api/verificar_mesa/
+    """
+    if request.method != "POST":
+        return JsonResponse({
+            "success": False,
+            "error": "Método no permitido. Use POST"
+        }, status=405)
+    
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+        nombre_mesa = data.get('nombre', '').strip()
+        
+        if not nombre_mesa:
+            return JsonResponse({
+                "success": False,
+                "error": "El nombre de la mesa es requerido"
+            }, status=400)
+        
+        existe = Mesa.objects.filter(nombre__iexact=nombre_mesa).exists()
+        
+        return JsonResponse({
+            "success": True,
+            "existe": existe,
+            "nombre": nombre_mesa
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            "success": False,
+            "error": "JSON inválido"
         }, status=400)
     except Exception as e:
         return JsonResponse({
