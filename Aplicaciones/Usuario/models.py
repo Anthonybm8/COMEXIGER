@@ -1,6 +1,11 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password, check_password
+class Mesa(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)  # ✅ único atributo
 
+    def __str__(self):
+        return self.nombre
+    
 class Usuario(models.Model):
     nombres = models.CharField(max_length=100)
     apellidos = models.CharField(max_length=100)
