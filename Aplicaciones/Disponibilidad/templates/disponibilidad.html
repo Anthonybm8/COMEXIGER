@@ -237,11 +237,15 @@ $(document).ready(function() {
 
         if (filaExistente) {
             const rowData = filaExistente.data();
-            const stockActual = parseInt(rowData[5]) || 0;
-            rowData[5] = stockActual + 1; // ✅ IGUAL QUE BONCHES
+
+            rowData[5] = data.stock;
+            data.fecha_salida ? formatearFechaLarga(data.fecha_salida) : "-"
+
             filaExistente.data(rowData).draw(false);
             return;
         }
+
+
 
         // ➕ NUEVA FILA
         table.row.add([
@@ -252,7 +256,7 @@ $(document).ready(function() {
             data.medida,                          // 4 Medida
             data.stock || 1,                      // 5 Stock
             formatearFechaLarga(data.fecha_entrada), // 6 Fecha entrada
-            data.fecha_salida || "-",             // 7 Fecha salida
+            data.fecha_salida ? formatearFechaLarga(data.fecha_salida) : "-" // 7 Fecha salida
             `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
              <a href="/disponibilidad/eliminar/${data.id}" class="btn btn-outline-danger">
              <i class="fa fa-trash"></i></a>`
@@ -322,7 +326,7 @@ document.getElementById("btnLimpiarFiltros").addEventListener("click", function 
                     item.medida,
                     item.stock,
                     formatearFechaLarga(item.fecha_entrada),
-                    item.fecha_salida || "-",
+                    item.fecha_salida ? formatearFechaLarga(item.fecha_salida) : "-"
                     `<button class="btn btn-outline-warning"><i class="fa fa-pen"></i></button>
                      <a href="/disponibilidad/eliminar/${item.id}" class="btn btn-outline-danger">
                      <i class="fa fa-trash"></i></a>`

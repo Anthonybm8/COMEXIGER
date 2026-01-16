@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -233,4 +234,68 @@ def api_disponibilidad_stats(request):
                             .distinct()
                             .count()
     })
+#API PARA LA DISPONIBILIDAD QUE SALE
+from .models import Disponibilidad, QRDisponibilidadSalidaUsado
 
+@api_view(['POST'])
+def api_disponibilidad_salida(request):
+    data = request.data
+    codigo = data.get("qr_id")
+    variedad = data.get("variedad")
+    medida = data.get("medida")
+
+    if not codigo or not variedad or not medida:
+        return Response(
+            {"error": "Datos incompletos: qr_id, variedad y medida son obligatorios"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # ⛔ Si ya se restó este QR una vez, NO permitir otra vez
+    if QRDisponibilidadSalidaUsado.objects.filter(qr_id=codigo).exists():
+        return Response(
+            {"error": "Este QR ya fue utilizado en SALIDA (ya se restó una vez)"},
+            status=status.HTTP_409_CONFLICT
+        )
+
+    channel_layer = get_channel_layer()
+
+    with transaction.atomic():
+        dispo = (Disponibilidad.objects
+                 .select_for_update()
+                 .filter(
+                     fecha_salida__isnull=True,
+                     variedad=variedad,
+                     medida=medida,
+                     stock__gt=0
+                 )
+                 .order_by('fecha_entrada', 'id')
+                 .first())
+
+        if not dispo:
+            return Response(
+                {"error": "No hay stock disponible para esa variedad y medida"},
+                status=status.HTTP_409_CONFLICT
+            )
+
+        # Registrar QR como ya restado
+        QRDisponibilidadSalidaUsado.objects.create(qr_id=codigo)
+
+        # Restar 1
+        dispo.stock -= 1
+
+        # Si llega a 0, marca fecha_salida (opcional)
+        if dispo.stock == 0:
+            dispo.fecha_salida = timezone.now()
+
+        dispo.save()
+
+    # Notificar por websocket
+    async_to_sync(channel_layer.group_send)(
+        "disponibilidad",
+        {
+            "type": "nueva_disponibilidad",
+            "data": DisponibilidadSerializer(dispo).data
+        }
+    )
+
+    return Response(DisponibilidadSerializer(dispo).data, status=status.HTTP_200_OK)
