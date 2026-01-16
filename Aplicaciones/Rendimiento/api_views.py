@@ -2,243 +2,207 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from datetime import datetime
 import json
-from .models import JornadaLaboral
-from .serializers import JornadaLaboralSerializer
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
+from .models import Rendimiento
+from .serializers import RendimientoSerializer
+
+def _broadcast_rendimiento(rendimiento):
+    channel_layer = get_channel_layer()
+
+    data = RendimientoSerializer(rendimiento).data
+
+    # ✅ opcional: asegurar que hora_inicio/hora_final salgan como "HH:MM"
+    # si serializer te devuelve "02:06:03" está bien, en front cortamos a HH:MM
+    async_to_sync(channel_layer.group_send)(
+        "rendimientos",
+        {
+            "type": "nuevo_rendimiento",  # 👈 debe coincidir con tu consumer
+            "data": data
+        }
+    )
 
 @csrf_exempt
 def iniciar_jornada_api(request):
     """
-    API para iniciar jornada laboral desde Flutter
-    POST: http://localhost:8000/api/jornada/iniciar/
+    POST: /api/jornada/iniciar/
+    Body: { "mesa": "1" }  (o "numero_mesa")
+
+    ✅ Crea 1 registro base por mesa + hoy.
+    ✅ No permite duplicados si ya hay jornada activa.
     """
     if request.method != "POST":
-        return JsonResponse({
-            "success": False,
-            "error": "Método no permitido. Use POST"
-        }, status=405)
-    
+        return JsonResponse({"success": False, "error": "Método no permitido. Use POST"}, status=405)
+
     try:
-        # 1. Obtener y validar JSON
         data = json.loads(request.body.decode("utf-8"))
-        
-        # 2. Validar campos requeridos
-        usuario_username = data.get('usuario_username', '').strip()
-        usuario_nombre = data.get('usuario_nombre', '').strip()
-        mesa = data.get('mesa', '').strip()
-        
-        if not usuario_username:
-            return JsonResponse({
-                "success": False,
-                "error": "El username del usuario es requerido"
-            }, status=400)
-        
+
+        mesa = (data.get("mesa") or data.get("numero_mesa") or "").strip()
         if not mesa:
-            return JsonResponse({
-                "success": False,
-                "error": "La mesa es requerida"
-            }, status=400)
-        
-        # 3. Verificar si ya tiene una jornada activa hoy
+            return JsonResponse({"success": False, "error": "La mesa es requerida"}, status=400)
+
         hoy = timezone.localdate()
-        jornada_activa = JornadaLaboral.objects.filter(
-            usuario_username=usuario_username,
-            fecha=hoy,
-            estado='iniciada'
-        ).first()
-        
+
+        # ✅ Jornada activa hoy para esa mesa
+        jornada_activa = Rendimiento.objects.filter(
+            qr_id="JORNADA",
+            numero_mesa=mesa,
+            fecha_entrada__date=hoy,
+            hora_final__isnull=True
+        ).order_by("-fecha_entrada").first()
+
         if jornada_activa:
             return JsonResponse({
                 "success": False,
-                "error": "Ya tienes una jornada iniciada hoy",
-                "jornada_actual": JornadaLaboralSerializer(jornada_activa).data
+                "error": "Ya existe una jornada iniciada hoy para esta mesa",
+                "data": RendimientoSerializer(jornada_activa).data
             }, status=400)
-        
-        # 4. Crear nueva jornada
-        jornada = JornadaLaboral.objects.create(
-            usuario_username=usuario_username,
-            usuario_nombre=usuario_nombre,
-            mesa=mesa,
-            hora_inicio=timezone.now()
+
+        # ✅ Crear registro base
+        rendimiento = Rendimiento.objects.create(
+            qr_id="JORNADA",
+            numero_mesa=mesa,
+            fecha_entrada=timezone.now(),
+            hora_inicio=timezone.now(),
+            hora_final=None,
+            bonches=0
         )
-        
-        # 5. Respuesta exitosa
+
+        rendimiento.recalcular()
+        rendimiento.save()
+        _broadcast_rendimiento(rendimiento)
         return JsonResponse({
             "success": True,
             "message": "Jornada iniciada exitosamente",
-            "data": JornadaLaboralSerializer(jornada).data
+            "data": RendimientoSerializer(rendimiento).data
         }, status=201)
-        
+
     except json.JSONDecodeError:
-        return JsonResponse({
-            "success": False,
-            "error": "JSON inválido en el cuerpo de la solicitud"
-        }, status=400)
+        return JsonResponse({"success": False, "error": "JSON inválido"}, status=400)
     except Exception as e:
-        return JsonResponse({
-            "success": False,
-            "error": f"Error del servidor: {str(e)}"
-        }, status=500)
+        _broadcast_rendimiento(rendimiento)
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
 
 @csrf_exempt
 def finalizar_jornada_api(request):
     """
-    API para finalizar jornada laboral desde Flutter
-    POST: http://localhost:8000/api/jornada/finalizar/
+    POST: /api/jornada/finalizar/
+    Body: { "mesa": "1" }
+
+    ✅ Finaliza la jornada activa (mesa + hoy).
     """
     if request.method != "POST":
-        return JsonResponse({
-            "success": False,
-            "error": "Método no permitido. Use POST"
-        }, status=405)
-    
+        return JsonResponse({"success": False, "error": "Método no permitido. Use POST"}, status=405)
+
     try:
-        # 1. Obtener y validar JSON
         data = json.loads(request.body.decode("utf-8"))
-        
-        # 2. Validar campos requeridos
-        usuario_username = data.get('usuario_username', '').strip()
-        
-        if not usuario_username:
-            return JsonResponse({
-                "success": False,
-                "error": "El username del usuario es requerido"
-            }, status=400)
-        
-        # 3. Verificar si tiene una jornada activa hoy
+
+        mesa = (data.get("mesa") or data.get("numero_mesa") or "").strip()
+        if not mesa:
+            return JsonResponse({"success": False, "error": "La mesa es requerida"}, status=400)
+
         hoy = timezone.localdate()
-        jornada_activa = JornadaLaboral.objects.filter(
-            usuario_username=usuario_username,
-            fecha=hoy,
-            estado='iniciada'
-        ).first()
-        
+
+        jornada_activa = Rendimiento.objects.filter(
+            qr_id="JORNADA",
+            numero_mesa=mesa,
+            fecha_entrada__date=hoy,
+            hora_final__isnull=True
+        ).order_by("-fecha_entrada").first()
+
         if not jornada_activa:
-            return JsonResponse({
-                "success": False,
-                "error": "No tienes una jornada iniciada hoy"
-            }, status=400)
-        
-        # 4. Finalizar la jornada
-        jornada_activa.hora_fin = timezone.now()
-        jornada_activa.save()  # El save() ya calcula las horas y cambia el estado
-        
-        # 5. Respuesta exitosa
+            return JsonResponse({"success": False, "error": "No hay una jornada iniciada hoy para esta mesa"}, status=400)
+
+        jornada_activa.hora_final = timezone.now()
+        jornada_activa.recalcular()
+        jornada_activa.save()
+        _broadcast_rendimiento(jornada_activa)
         return JsonResponse({
             "success": True,
             "message": "Jornada finalizada exitosamente",
-            "data": JornadaLaboralSerializer(jornada_activa).data
+            "data": RendimientoSerializer(jornada_activa).data
         }, status=200)
-        
+
     except json.JSONDecodeError:
-        return JsonResponse({
-            "success": False,
-            "error": "JSON inválido en el cuerpo de la solicitud"
-        }, status=400)
+        return JsonResponse({"success": False, "error": "JSON inválido"}, status=400)
     except Exception as e:
-        return JsonResponse({
-            "success": False,
-            "error": f"Error del servidor: {str(e)}"
-        }, status=500)
+        _broadcast_rendimiento(jornada_activa)
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
 
 @csrf_exempt
 def obtener_jornada_actual_api(request):
     """
-    API para obtener la jornada actual del usuario
-    GET: http://localhost:8000/api/jornada/actual/?usuario_username=juan
+    GET: /api/jornada/actual/?mesa=1
     """
     if request.method != "GET":
-        return JsonResponse({
-            "success": False,
-            "error": "Método no permitido. Use GET"
-        }, status=405)
-    
+        return JsonResponse({"success": False, "error": "Método no permitido. Use GET"}, status=405)
+
     try:
-        # 1. Obtener parámetros
-        usuario_username = request.GET.get('usuario_username')
-        
-        if not usuario_username:
-            return JsonResponse({
-                "success": False,
-                "error": "El parámetro 'usuario_username' es requerido"
-            }, status=400)
-        
-        # 2. Buscar jornada activa hoy
+        mesa = (request.GET.get("mesa") or request.GET.get("numero_mesa") or "").strip()
+        if not mesa:
+            return JsonResponse({"success": False, "error": "El parámetro 'mesa' es requerido"}, status=400)
+
         hoy = timezone.localdate()
-        jornada_activa = JornadaLaboral.objects.filter(
-            usuario_username=usuario_username,
-            fecha=hoy,
-            estado='iniciada'
-        ).first()
-        
-        # 3. Buscar última jornada (si no hay activa)
-        ultima_jornada = JornadaLaboral.objects.filter(
-            usuario_username=usuario_username
-        ).order_by('-fecha', '-hora_inicio').first()
-        
-        # 4. Preparar respuesta
-        response_data = {
-            "tiene_jornada_activa": jornada_activa is not None,
-            "jornada_activa": JornadaLaboralSerializer(jornada_activa).data if jornada_activa else None,
-            "ultima_jornada": JornadaLaboralSerializer(ultima_jornada).data if ultima_jornada else None
-        }
-        
+
+        jornada_activa = Rendimiento.objects.filter(
+            qr_id="JORNADA",
+            numero_mesa=mesa,
+            fecha_entrada__date=hoy,
+            hora_final__isnull=True
+        ).order_by("-fecha_entrada").first()
+
+        ultima_jornada = Rendimiento.objects.filter(
+            qr_id="JORNADA",
+            numero_mesa=mesa
+        ).order_by("-fecha_entrada").first()
+
         return JsonResponse({
             "success": True,
-            "data": response_data
-        })
-        
+            "data": {
+                "tiene_jornada_activa": jornada_activa is not None,
+                "jornada_activa": RendimientoSerializer(jornada_activa).data if jornada_activa else None,
+                "ultima_jornada": RendimientoSerializer(ultima_jornada).data if ultima_jornada else None
+            }
+        }, status=200)
+
     except Exception as e:
-        return JsonResponse({
-            "success": False,
-            "error": f"Error del servidor: {str(e)}"
-        }, status=500)
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
 
 @csrf_exempt
 def obtener_historial_jornadas_api(request):
     """
-    API para obtener historial de jornadas del usuario
-    GET: http://localhost:8000/api/jornada/historial/?usuario_username=juan&limit=10
+    GET: /api/jornada/historial/?mesa=1&limit=30
     """
     if request.method != "GET":
-        return JsonResponse({
-            "success": False,
-            "error": "Método no permitido. Use GET"
-        }, status=405)
-    
+        return JsonResponse({"success": False, "error": "Método no permitido. Use GET"}, status=405)
+
     try:
-        # 1. Obtener parámetros
-        usuario_username = request.GET.get('usuario_username')
-        limit = int(request.GET.get('limit', 30))
-        
-        if not usuario_username:
-            return JsonResponse({
-                "success": False,
-                "error": "El parámetro 'usuario_username' es requerido"
-            }, status=400)
-        
-        # 2. Obtener jornadas ordenadas por fecha descendente
-        jornadas = JornadaLaboral.objects.filter(
-            usuario_username=usuario_username
-        ).order_by('-fecha', '-hora_inicio')[:limit]
-        
-        # 3. Calcular estadísticas
-        total_jornadas = jornadas.count()
-        total_horas = sum(j.horas_trabajadas or 0 for j in jornadas if j.horas_trabajadas)
-        
-        # 4. Preparar respuesta
+        mesa = (request.GET.get("mesa") or request.GET.get("numero_mesa") or "").strip()
+        limit = int(request.GET.get("limit", 30))
+
+        if not mesa:
+            return JsonResponse({"success": False, "error": "El parámetro 'mesa' es requerido"}, status=400)
+
+        jornadas = Rendimiento.objects.filter(
+            qr_id="JORNADA",
+            numero_mesa=mesa
+        ).order_by("-fecha_entrada")[:limit]
+
+        total_horas = sum((j.horas_trabajadas or 0) for j in jornadas)
+
         return JsonResponse({
             "success": True,
             "data": {
-                "total_jornadas": total_jornadas,
+                "total_jornadas": jornadas.count(),
                 "total_horas": round(total_horas, 2),
-                "jornadas": JornadaLaboralSerializer(jornadas, many=True).data
+                "jornadas": RendimientoSerializer(jornadas, many=True).data
             }
-        })
-        
+        }, status=200)
+
     except Exception as e:
-        return JsonResponse({
-            "success": False,
-            "error": f"Error del servidor: {str(e)}"
-        }, status=500)
+        return JsonResponse({"success": False, "error": str(e)}, status=500)

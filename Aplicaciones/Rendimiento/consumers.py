@@ -9,10 +9,16 @@ class RendimientoConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard("rendimientos", self.channel_name)
 
-    # Para eventos que envías como "type": "nuevo_rendimiento"
+    # ✅ Evento principal: "type": "nuevo_rendimiento"
     async def nuevo_rendimiento(self, event):
-        await self.send(text_data=json.dumps(event["data"]))
+        await self.send(text_data=json.dumps({
+            "type": "nuevo_rendimiento",
+            "data": event.get("data", {})
+        }))
 
-    # Para eventos que envían "type": "send_rendimiento"
+    # ✅ Si por alguna razón todavía usas "send_rendimiento"
     async def send_rendimiento(self, event):
-        await self.send(text_data=json.dumps(event["data"]))
+        await self.send(text_data=json.dumps({
+            "type": "send_rendimiento",
+            "data": event.get("data", {})
+        }))

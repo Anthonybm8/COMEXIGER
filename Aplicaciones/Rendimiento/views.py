@@ -18,7 +18,8 @@ from rest_framework.response import Response
 # ================== VISTAS WEB ==================
 
 def inicio(request):
-    listadoRendimiento = Rendimiento.objects.all()
+    # ✅ Mostrar solo jornadas base (opcional pero recomendado)
+    listadoRendimiento = Rendimiento.objects.filter(qr_id="JORNADA").order_by('-fecha_entrada')
     return render(request, 'rendimiento.html', {'rendimiento': listadoRendimiento})
 
 
@@ -27,31 +28,48 @@ def nuevo_rendimiento(request):
 
 
 def guardar_rendimiento(request):
+    """
+    Manual (web). Si no lo usas, puedes eliminar esta vista.
+    """
     if request.method == "POST":
-        numero_mesa = request.POST["numero_mesa"]
-        fecha_entrada = request.POST["fecha_entrada"]
-        bonches = int(request.POST.get("bonches", 0))
+        try:
+            numero_mesa = request.POST["numero_mesa"]
+            fecha_entrada_str = request.POST.get("fecha_entrada")
+            bonches = int(request.POST.get("bonches", 0))
 
-        nuevo = Rendimiento.objects.create(
-            numero_mesa=numero_mesa,
-            fecha_entrada=fecha_entrada,
-            bonches=bonches
-        )
+            if fecha_entrada_str:
+                try:
+                    fecha_entrada_dt = datetime.strptime(fecha_entrada_str, "%Y-%m-%dT%H:%M")
+                    fecha_entrada_dt = timezone.make_aware(
+                        fecha_entrada_dt, timezone.get_current_timezone()
+                    )
+                except Exception:
+                    fecha_entrada_dt = timezone.now()
+            else:
+                fecha_entrada_dt = timezone.now()
 
-        nuevo.recalcular()
-        nuevo.save()
+            nuevo = Rendimiento.objects.create(
+                qr_id="MANUAL",
+                numero_mesa=numero_mesa,
+                fecha_entrada=fecha_entrada_dt,
+                bonches=bonches
+            )
 
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            "rendimientos",
-            {
-                "type": "nuevo_rendimiento",
-                "data": RendimientoSerializer(nuevo).data
-            }
-        )
+            nuevo.recalcular()
+            nuevo.save()
 
-        messages.success(request, "Rendimiento guardado exitosamente")
-        return redirect('rendimiento')
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "rendimientos",
+                {"type": "nuevo_rendimiento", "data": RendimientoSerializer(nuevo).data}
+            )
+
+            messages.success(request, "Rendimiento guardado exitosamente")
+            return redirect('rendimiento')
+
+        except Exception as e:
+            messages.error(request, f"Error al guardar rendimiento: {e}")
+            return redirect('nuevo_rendimiento')
 
     messages.error(request, "Error al guardar rendimiento")
     return redirect('nuevo_rendimiento')
@@ -71,19 +89,36 @@ def procesar_edicion_rendimiento(request):
 
             rendimiento.numero_mesa = request.POST["numero_mesa"]
             rendimiento.bonches = int(request.POST.get("bonches", 0))
+            # ✅ SI editas rendimiento desde el modal, guárdalo
+            if request.POST.get("rendimiento"):
+                rendimiento.rendimiento = int(request.POST.get("rendimiento"))
 
             if request.POST.get("fecha_entrada"):
-                rendimiento.fecha_entrada = request.POST["fecha_entrada"]
+                try:
+                    dt = datetime.strptime(request.POST["fecha_entrada"], "%Y-%m-%dT%H:%M")
+                    rendimiento.fecha_entrada = timezone.make_aware(
+                        dt, timezone.get_current_timezone()
+                    )
+                except Exception:
+                    pass
 
             if request.POST.get("hora_inicio"):
-                rendimiento.hora_inicio = datetime.strptime(
-                    request.POST["hora_inicio"], "%Y-%m-%dT%H:%M"
-                )
+                try:
+                    dt = datetime.strptime(request.POST["hora_inicio"], "%Y-%m-%dT%H:%M")
+                    rendimiento.hora_inicio = timezone.make_aware(
+                        dt, timezone.get_current_timezone()
+                    )
+                except Exception:
+                    pass
 
             if request.POST.get("hora_final"):
-                rendimiento.hora_final = datetime.strptime(
-                    request.POST["hora_final"], "%Y-%m-%dT%H:%M"
-                )
+                try:
+                    dt = datetime.strptime(request.POST["hora_final"], "%Y-%m-%dT%H:%M")
+                    rendimiento.hora_final = timezone.make_aware(
+                        dt, timezone.get_current_timezone()
+                    )
+                except Exception:
+                    pass
 
             rendimiento.recalcular()
             rendimiento.save()
@@ -91,10 +126,7 @@ def procesar_edicion_rendimiento(request):
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
                 "rendimientos",
-                {
-                    "type": "nuevo_rendimiento",
-                    "data": RendimientoSerializer(rendimiento).data
-                }
+                {"type": "nuevo_rendimiento", "data": RendimientoSerializer(rendimiento).data}
             )
 
             messages.success(request, "Rendimiento actualizado correctamente")
@@ -114,7 +146,7 @@ class RendimientoViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def activos(self, request):
         serializer = self.get_serializer(
-            Rendimiento.objects.filter(fecha_salida__isnull=True),
+            Rendimiento.objects.filter(qr_id="JORNADA", hora_final__isnull=True).order_by('-fecha_entrada'),
             many=True
         )
         return Response(serializer.data)
@@ -126,7 +158,7 @@ class RendimientoViewSet(viewsets.ModelViewSet):
             return Response({"error": "Parámetro 'mesa' requerido"}, status=400)
 
         serializer = self.get_serializer(
-            Rendimiento.objects.filter(numero_mesa=mesa),
+            Rendimiento.objects.filter(qr_id="JORNADA", numero_mesa=mesa).order_by('-fecha_entrada'),
             many=True
         )
         return Response(serializer.data)
@@ -134,10 +166,9 @@ class RendimientoViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET', 'POST'])
 def api_rendimiento_list(request):
-
     # ---------- GET ----------
     if request.method == 'GET':
-        rendimientos = Rendimiento.objects.all()
+        rendimientos = Rendimiento.objects.filter(qr_id="JORNADA")
 
         if request.query_params.get("fecha"):
             rendimientos = rendimientos.filter(
@@ -156,13 +187,7 @@ def api_rendimiento_list(request):
         reciente = request.query_params.get("reciente")
 
         if ordenar:
-            campo = {
-                "mesa": "numero_mesa",
-                "variedad": "variedad",
-                "medida": "medida",
-                "fecha": "fecha_entrada"
-            }.get(ordenar)
-
+            campo = {"mesa": "numero_mesa", "fecha": "fecha_entrada"}.get(ordenar)
             if campo:
                 if reciente == "true":
                     campo = f"-{campo}"
@@ -173,76 +198,47 @@ def api_rendimiento_list(request):
 
     # ---------- POST (QR) ----------
     data = request.data
-
     codigo = data.get("qr_id")
     mesa = data.get("numero_mesa")
-    fecha_flor = data.get("fecha_entrada") or timezone.localdate()
 
     if not codigo or not mesa:
+        return Response({"error": "Datos incompletos"}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(
-            {"error": "Datos incompletos"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    hoy = timezone.localdate()
 
-    # 🔒 BLOQUEO PERMANENTE
-    if QRUsado.objects.filter(qr_id=codigo).exists():
+    # ✅ 0) Debe existir jornada activa para esa mesa hoy
+    jornada_base = Rendimiento.objects.filter(
+        qr_id="JORNADA",
+        numero_mesa=mesa,
+        fecha_entrada__date=hoy,
+        hora_final__isnull=True
+    ).order_by("-fecha_entrada").first()
+
+    if not jornada_base:
         return Response(
-            {"error": "Este QR ya fue utilizado"},
+            {"error": "No hay jornada iniciada para esta mesa hoy. Primero inicia jornada."},
             status=status.HTTP_409_CONFLICT
         )
 
-    # Guardar QR como usado PARA SIEMPRE
+    # 🔒 1) QR no repetido para siempre
+    if QRUsado.objects.filter(qr_id=codigo).exists():
+        return Response({"error": "Este QR ya fue utilizado"}, status=status.HTTP_409_CONFLICT)
+
     QRUsado.objects.create(qr_id=codigo)
 
-    hoy = timezone.localdate()
-        
-    existente = Rendimiento.objects.filter(
-        numero_mesa=mesa,
-        fecha_entrada__date=hoy
-    ).first()
+    # ✅ 2) Sumar al registro base
+    jornada_base.bonches += 1
+    jornada_base.recalcular()
+    jornada_base.save()
 
-
-
-    if existente:
-        existente.bonches += 1
-        existente.recalcular()
-        existente.save()
-
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            "rendimientos",
-            {
-                "type": "nuevo_rendimiento",
-                "data": RendimientoSerializer(existente).data
-            }
-        )
-
-        return Response(RendimientoSerializer(existente).data, status=200)
-
-    nuevo = Rendimiento.objects.create(
-        qr_id=codigo,
-        numero_mesa=mesa,
-        fecha_entrada=timezone.now(),
-        bonches=1
-    )
-
-    nuevo.recalcular()
-    nuevo.save()
-
+    # ✅ websocket
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         "rendimientos",
-        {
-            "type": "nuevo_rendimiento",
-            "data": RendimientoSerializer(nuevo).data
-        }
+        {"type": "nuevo_rendimiento", "data": RendimientoSerializer(jornada_base).data}
     )
 
-    return Response(
-        RendimientoSerializer(nuevo).data,
-        status=status.HTTP_201_CREATED
-    )
+    return Response(RendimientoSerializer(jornada_base).data, status=200)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -263,10 +259,7 @@ def api_rendimiento_detail(request, pk):
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
                 "rendimientos",
-                {
-                    "type": "nuevo_rendimiento",
-                    "data": serializer.data
-                }
+                {"type": "nuevo_rendimiento", "data": serializer.data}
             )
 
             return Response(serializer.data)
@@ -279,15 +272,10 @@ def api_rendimiento_detail(request, pk):
 
 @api_view(['GET'])
 def api_rendimiento_stats(request):
+    jornadas = Rendimiento.objects.filter(qr_id="JORNADA")
     return Response({
-        'total_rendimientos': Rendimiento.objects.count(),
-        'rendimientos_activos': Rendimiento.objects.filter(
-            fecha_salida__isnull=True
-        ).count(),
-        'total_bonches': Rendimiento.objects.aggregate(
-            Sum('bonches')
-        )['bonches__sum'] or 0,
-        'mesas_activas': Rendimiento.objects.filter(
-            fecha_salida__isnull=True
-        ).values('numero_mesa').distinct().count()
+        'total_rendimientos': jornadas.count(),
+        'rendimientos_activos': jornadas.filter(hora_final__isnull=True).count(),
+        'total_bonches': jornadas.aggregate(Sum('bonches'))['bonches__sum'] or 0,
+        'mesas_activas': jornadas.filter(hora_final__isnull=True).values('numero_mesa').distinct().count()
     })
