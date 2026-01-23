@@ -26,100 +26,83 @@ def _broadcast_rendimiento(rendimiento):
 
 @csrf_exempt
 def iniciar_jornada_api(request):
-    """
-    POST: /api/jornada/iniciar/
-    Body: { "mesa": "1" }  (o "numero_mesa")
-
-    ✅ Crea 1 registro base por mesa + hoy.
-    ✅ No permite duplicados si ya hay jornada activa.
-    """
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Método no permitido. Use POST"}, status=405)
 
     try:
         data = json.loads(request.body.decode("utf-8"))
-
         mesa = (data.get("mesa") or data.get("numero_mesa") or "").strip()
         if not mesa:
             return JsonResponse({"success": False, "error": "La mesa es requerida"}, status=400)
 
-        hoy = timezone.localdate()
+        rendimiento_val = int(data.get("rendimiento") or 20)
+        ramos_base_val  = int(data.get("ramos_base") or 0)
 
-        # ✅ Jornada activa hoy para esa mesa
-        jornada_activa = Rendimiento.objects.filter(
-            qr_id="JORNADA",
-            numero_mesa=mesa,
-            fecha_entrada__date=hoy,
-            hora_final__isnull=True
-        ).order_by("-fecha_entrada").first()
+        # ✅ NO depender de "hoy": buscar jornada activa real
+        jornada_activa = (Rendimiento.objects
+            .filter(qr_id="JORNADA", numero_mesa=mesa, hora_final__isnull=True)
+            .order_by("-hora_inicio", "-fecha_entrada")
+            .first()
+        )
 
         if jornada_activa:
             return JsonResponse({
                 "success": False,
-                "error": "Ya existe una jornada iniciada hoy para esta mesa",
+                "error": "Ya existe una jornada activa para esta mesa",
                 "data": RendimientoSerializer(jornada_activa).data
-            }, status=400)
+            }, status=409)
 
-        # ✅ Crear registro base
-        rendimiento = Rendimiento.objects.create(
+        r = Rendimiento.objects.create(
             qr_id="JORNADA",
             numero_mesa=mesa,
             fecha_entrada=timezone.now(),
             hora_inicio=timezone.now(),
             hora_final=None,
+            rendimiento=20,   
             bonches=0
         )
 
-        rendimiento.recalcular()
-        rendimiento.save()
-        _broadcast_rendimiento(rendimiento)
+
+        r.save()  # (si tu modelo recalcula en save)
+        _broadcast_rendimiento(r)
+
         return JsonResponse({
             "success": True,
             "message": "Jornada iniciada exitosamente",
-            "data": RendimientoSerializer(rendimiento).data
+            "data": RendimientoSerializer(r).data
         }, status=201)
 
     except json.JSONDecodeError:
         return JsonResponse({"success": False, "error": "JSON inválido"}, status=400)
     except Exception as e:
-        _broadcast_rendimiento(rendimiento)
         return JsonResponse({"success": False, "error": str(e)}, status=500)
+
 
 
 @csrf_exempt
 def finalizar_jornada_api(request):
-    """
-    POST: /api/jornada/finalizar/
-    Body: { "mesa": "1" }
-
-    ✅ Finaliza la jornada activa (mesa + hoy).
-    """
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Método no permitido. Use POST"}, status=405)
 
     try:
         data = json.loads(request.body.decode("utf-8"))
-
         mesa = (data.get("mesa") or data.get("numero_mesa") or "").strip()
         if not mesa:
             return JsonResponse({"success": False, "error": "La mesa es requerida"}, status=400)
 
-        hoy = timezone.localdate()
-
-        jornada_activa = Rendimiento.objects.filter(
-            qr_id="JORNADA",
-            numero_mesa=mesa,
-            fecha_entrada__date=hoy,
-            hora_final__isnull=True
-        ).order_by("-fecha_entrada").first()
+        jornada_activa = (Rendimiento.objects
+            .filter(qr_id="JORNADA", numero_mesa=mesa, hora_final__isnull=True)
+            .order_by("-hora_inicio", "-fecha_entrada")
+            .first()
+        )
 
         if not jornada_activa:
-            return JsonResponse({"success": False, "error": "No hay una jornada iniciada hoy para esta mesa"}, status=400)
+            return JsonResponse({"success": False, "error": "No hay jornada activa para esta mesa"}, status=404)
 
         jornada_activa.hora_final = timezone.now()
-        jornada_activa.recalcular()
-        jornada_activa.save()
+        jornada_activa.save()  # (recalcula en save)
         _broadcast_rendimiento(jornada_activa)
+
         return JsonResponse({
             "success": True,
             "message": "Jornada finalizada exitosamente",
@@ -129,8 +112,8 @@ def finalizar_jornada_api(request):
     except json.JSONDecodeError:
         return JsonResponse({"success": False, "error": "JSON inválido"}, status=400)
     except Exception as e:
-        _broadcast_rendimiento(jornada_activa)
         return JsonResponse({"success": False, "error": str(e)}, status=500)
+
 
 
 @csrf_exempt

@@ -27,7 +27,9 @@ def cerrarsesion(request):
 
 def inicios(request):
     listadoUsuarios = Usuario.objects.all()
-    return render(request, "usuariore.html", {"usuario": listadoUsuarios})
+    mesas = Mesa.objects.all().order_by("nombre")
+    return render(request, "usuariore.html", {"usuario": listadoUsuarios, "mesas": mesas})
+
 
 
 def nuevo_usuario(request):
@@ -90,23 +92,48 @@ def eliminar_usuario(request, id):
 
 def procesar_edicion_usuario(request):
     """
-    ✅ Mantiene tu edición tal cual.
-    NOTA: Aquí NO estás editando username/password, solo datos generales.
+    ✅ Edita: nombres, apellidos, mesa, cargo, username
+    ✅ Password ES OPCIONAL:
+       - Si viene vacío: no se cambia
+       - Si viene con texto: se actualiza (hasheado con set_password)
     """
     if request.method == "POST":
         try:
             id = request.POST["id"]
             usuario = Usuario.objects.get(id=id)
 
-            usuario.nombres = request.POST["nombres"]
-            usuario.apellidos = request.POST["apellidos"]
-            usuario.mesa = request.POST["mesa"]
-            usuario.cargo = request.POST["cargo"]
+            # Datos generales
+            usuario.nombres = (request.POST.get("nombres") or "").strip()
+            usuario.apellidos = (request.POST.get("apellidos") or "").strip()
+            usuario.mesa = (request.POST.get("mesa") or "").strip()
+            usuario.cargo = (request.POST.get("cargo") or "").strip()
+
+            # Username (usuario) editable
+            nuevo_username = (request.POST.get("username") or "").strip()
+
+            if not nuevo_username:
+                messages.error(request, "El usuario (username) es obligatorio.")
+                return redirect("usuariore")
+
+            # Validar que no exista ese username en OTRO usuario
+            if Usuario.objects.filter(username__iexact=nuevo_username).exclude(id=usuario.id).exists():
+                messages.error(request, "Ese usuario (username) ya está registrado. Elige otro.")
+                return redirect("usuariore")
+
+            usuario.username = nuevo_username
+
+            # Password opcional
+            nueva_password = (request.POST.get("password") or "").strip()
+            if nueva_password:  # solo si viene algo escrito
+                usuario.set_password(nueva_password)
 
             usuario.save()
             messages.success(request, "Usuario actualizado correctamente")
 
+        except Usuario.DoesNotExist:
+            messages.error(request, "El usuario no existe.")
         except Exception as e:
             messages.error(request, f"Error al procesar la edición: {e}")
 
-        return redirect("usuariore")
+    return redirect("usuariore")
+

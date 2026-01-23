@@ -207,12 +207,12 @@ def api_rendimiento_list(request):
     hoy = timezone.localdate()
 
     # ✅ 0) Debe existir jornada activa para esa mesa hoy
-    jornada_base = Rendimiento.objects.filter(
-        qr_id="JORNADA",
-        numero_mesa=mesa,
-        fecha_entrada__date=hoy,
-        hora_final__isnull=True
-    ).order_by("-fecha_entrada").first()
+    jornada_base = (Rendimiento.objects
+        .filter(qr_id="JORNADA", numero_mesa=mesa, hora_final__isnull=True)
+        .order_by("-hora_inicio", "-fecha_entrada")
+        .first()
+    )
+
 
     if not jornada_base:
         return Response(
@@ -252,22 +252,22 @@ def api_rendimiento_detail(request, pk):
         return Response(RendimientoSerializer(rendimiento).data)
 
     if request.method == 'PUT':
-        serializer = RendimientoSerializer(rendimiento, data=request.data)
+        serializer = RendimientoSerializer(rendimiento, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            obj = serializer.save()   # guarda los campos enviados
+            obj.recalcular()          # recalcula con hora_inicio/hora_final
+            obj.save()                # guarda los calculados
 
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
                 "rendimientos",
-                {"type": "nuevo_rendimiento", "data": serializer.data}
+                {"type": "nuevo_rendimiento", "data": RendimientoSerializer(obj).data}
             )
 
-            return Response(serializer.data)
+            return Response(RendimientoSerializer(obj).data)
 
         return Response(serializer.errors, status=400)
 
-    rendimiento.delete()
-    return Response(status=204)
 
 
 @api_view(['GET'])

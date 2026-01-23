@@ -5,14 +5,16 @@
 <br>
 <main class="container py-4">
     <h1 class="text-center">Listado de Usuarios</h1>
+
     <div class="text-center">
         <a href="{% url 'nuevo_usuario' %}" class="btn btn-primary">
             Nuevo Usuario
         </a>
     </div>
+
     <hr>
 
-    <table id="table_usuarios" >
+    <table id="table_usuarios">
         <thead>
             <tr class="table-success text-center">
                 <th>ID</th>
@@ -20,9 +22,11 @@
                 <th>Apellidos</th>
                 <th>Mesa</th>
                 <th>Cargo</th>
+                <th>Usuario</th>
                 <th>Acciones</th>
             </tr>
         </thead>
+
         <tbody>
             {% for u in usuario %}
             <tr>
@@ -31,14 +35,26 @@
                 <td>{{ u.apellidos }}</td>
                 <td>{{ u.mesa }}</td>
                 <td>{{ u.cargo }}</td>
+                <td>{{ u.username }}</td>
+
                 <td class="text-center">
-                    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEditar{{ u.id }}">
+                    <!-- EDITAR -->
+                    <button class="btn btn-outline-warning"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalEditar{{ u.id }}">
                         <i class="fa fa-pen"></i>
                     </button>
-                    <a href="{% url 'eliminar_usuario' u.id %}" class="btn btn-outline-danger"
-                       onclick="return confirm('¿Seguro que deseas eliminar este usuario?')">
+
+                    <!-- ELIMINAR -->
+                    <a href="{% url 'eliminar_usuario' u.id %}"
+                        class="btn btn-outline-danger btn-eliminar"
+                        data-nombre="{{ u.nombres }} {{ u.apellidos }}"
+                        data-id="{{ u.id }}">
                         <i class="fa fa-trash"></i>
                     </a>
+
+
+                    <!-- MODAL EDITAR -->
                     <div class="modal fade" id="modalEditar{{ u.id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content">
@@ -48,21 +64,49 @@
                                 </div>
 
                                 <div class="modal-body">
-                                    <form action="{% url 'procesar_edicion_usuario' %}" method="post" class="form_usuario">
+                                    <form action="{% url 'procesar_edicion_usuario' %}"
+                                          method="post"
+                                          class="form_usuario"
+                                          autocomplete="off">
                                         {% csrf_token %}
                                         <input type="hidden" name="id" value="{{ u.id }}">
 
-                                        <label for="nombres">Nombres</label>
-                                        <input class="form-control" type="text" name="nombres" value="{{ u.nombres }}" required><br>
+                                        <label class="form-label" for="nombres">Nombres</label>
+                                        <input class="form-control" type="text" name="nombres" value="{{ u.nombres }}" required>
+                                        <br>
 
-                                        <label for="apellidos">Apellidos</label>
-                                        <input class="form-control" type="text" name="apellidos" value="{{ u.apellidos }}" required><br>
+                                        <label class="form-label" for="apellidos">Apellidos</label>
+                                        <input class="form-control" type="text" name="apellidos" value="{{ u.apellidos }}" required>
+                                        <br>
 
-                                        <label for="mesa">Mesa</label>
-                                        <input class="form-control" type="text" name="mesa" value="{{ u.mesa }}" required><br>
+                                        <!-- ✅ MESA COMO SELECT -->
+                                        <label class="form-label" for="mesa">Mesa</label>
+                                        <select class="form-select" name="mesa" required>
+                                            <option value="">-- Seleccionar mesa --</option>
+                                            {% for m in mesas %}
+                                                <option value="{{ m.nombre }}" {% if u.mesa == m.nombre %}selected{% endif %}>
+                                                    {{ m.nombre }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <br>
 
-                                        <label for="cargo">Cargo</label>
-                                        <input class="form-control" type="text" name="cargo" value="{{ u.cargo }}" required><br>
+                                        <label class="form-label" for="cargo">Cargo</label>
+                                        <input class="form-control" type="text" name="cargo" value="{{ u.cargo }}" required>
+                                        <br>
+
+                                        <!-- ✅ Username editable -->
+                                        <label class="form-label" for="username">Usuario (username)</label>
+                                        <input class="form-control" type="text" name="username" value="{{ u.username }}" required>
+                                        <small class="text-muted">Debe ser único.</small>
+                                        <br><br>
+
+                                        <!-- ✅ Password opcional -->
+                                        <label class="form-label" for="password">Nueva contraseña (opcional)</label>
+                                        <input class="form-control" type="password" name="password"
+                                               placeholder="Dejar vacío para no cambiar">
+                                        <small class="text-muted">Si no escribes nada, se mantiene la contraseña actual.</small>
+                                        <br><br>
 
                                         <div class="d-flex justify-content-end">
                                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
@@ -74,14 +118,16 @@
                                         </div>
                                     </form>
                                 </div>
+
                             </div>
                         </div>
                     </div>
+                    <!-- /MODAL -->
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" class="text-center">No hay usuarios registrados.</td>
+                <td colspan="7" class="text-center">No hay usuarios registrados.</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -90,6 +136,8 @@
 
 <script>
 $(function () {
+
+    // Solo letras (para nombres y apellidos)
     $.validator.addMethod("lettersOnly", function(value, element) {
         return this.optional(element) || /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(value);
     }, "Solo letras, por favor.");
@@ -111,12 +159,23 @@ $(function () {
                     maxlength: 100
                 },
                 mesa: {
-                    required: true,
-                    maxlength: 100
+                    required: true
                 },
                 cargo: {
                     required: true,
                     maxlength: 100
+                },
+
+                // username requerido
+                username: {
+                    required: true,
+                    minlength: 3,
+                    maxlength: 50
+                },
+
+                // password opcional (solo valida si se escribe)
+                password: {
+                    minlength: 6
                 }
             },
             messages: {
@@ -131,12 +190,19 @@ $(function () {
                     maxlength: "No puede superar 100 caracteres."
                 },
                 mesa: {
-                    required: "Por favor ingrese la mesa.",
-                    maxlength: "No puede superar 100 caracteres."
+                    required: "Por favor seleccione una mesa."
                 },
                 cargo: {
                     required: "Por favor ingrese el cargo.",
                     maxlength: "No puede superar 100 caracteres."
+                },
+                username: {
+                    required: "Por favor ingrese el usuario (username).",
+                    minlength: "Debe tener al menos 3 caracteres.",
+                    maxlength: "No puede superar 50 caracteres."
+                },
+                password: {
+                    minlength: "Si vas a cambiar la contraseña, debe tener al menos 6 caracteres."
                 }
             },
             errorElement: 'div',
@@ -175,7 +241,35 @@ $(function () {
         ],
         pageLength: 10
     });
+
 });
+$(document).on('click', '.btn-eliminar', function(e){
+    e.preventDefault();
+
+    const url = $(this).attr('href');
+    const nombre = $(this).data('nombre') || 'este usuario';
+    const id = $(this).data('id') || '';
+
+    Swal.fire({
+        title: "¿Eliminar usuario?",
+        html: `Vas a eliminar a <b>${nombre}</b><br><span style="color:#FFD700;">Esta acción no se puede deshacer.</span>`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
+        background: "#000000",
+        color: "#ffffff",
+        confirmButtonColor: "#FFD700",
+        cancelButtonColor: "#6c757d",
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = url;
+        }
+    });
+});
+
+
 </script>
 
 <br><br>

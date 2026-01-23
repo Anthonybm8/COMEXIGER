@@ -3,6 +3,13 @@ from django.db import models
 from django.utils import timezone
 from datetime import datetime
 
+from decimal import Decimal, ROUND_FLOOR
+
+def hora_a_decimal_excel(dt):
+    # 20:30 -> 20.30 -> 20.3 (como tu Excel)
+    return float(f"{dt.hour}.{dt.minute:02d}")
+
+
 class QRUsado(models.Model):
     qr_id = models.CharField(max_length=255, unique=True)
     fecha_escaneo = models.DateTimeField(auto_now_add=True)
@@ -10,51 +17,82 @@ class QRUsado(models.Model):
     def __str__(self):
         return self.qr_id
 
+
 class Rendimiento(models.Model):
     qr_id = models.CharField(max_length=255)
     numero_mesa = models.CharField(max_length=50)
     fecha_entrada = models.DateTimeField()
-    
+
     # Datos que llegan desde la app
     hora_inicio = models.DateTimeField(null=True, blank=True)
     hora_final = models.DateTimeField(null=True, blank=True)
 
     # Datos base configurables
-    rendimiento = models.IntegerField(default=0)   
-    ramos_base = models.IntegerField(default=0)    
+    rendimiento = models.IntegerField(default=0)   # ej: 20
+    ramos_base = models.IntegerField(default=0)    # (este NO lo usas en fórmula; tu base real sale del cálculo)
 
-    bonches = models.IntegerField(default=0)       
+    bonches = models.IntegerField(default=0)       # reales
 
-    # Campos calculados (no se envían desde la app)
+    # Campos calculados
     horas_trabajadas = models.FloatField(null=True, blank=True)
-    ramos_esperados = models.FloatField(null=True, blank=True)
+    ramos_esperados = models.FloatField(null=True, blank=True)   # = RAMOS BASE (Excel)
     ramos_extras = models.FloatField(null=True, blank=True)
-    extras_por_hora = models.FloatField(null=True, blank=True)
+    extras_por_hora = models.FloatField(null=True, blank=True)   # = HORAS GANADAS (Excel)
+
+    from decimal import Decimal, ROUND_FLOOR
 
     def recalcular(self):
-        if self.hora_inicio and self.hora_final:
-            delta = self.hora_final - self.hora_inicio
-            horas = (delta.total_seconds() / 3600) - 1  # descanso de 1 hora
+        if self.hora_inicio and self.hora_final and self.rendimiento is not None:
+
+            # 1) Horas trabajadas usando tu regla Excel: (20.3 - 7) - 1
+            inicio_fake = hora_a_decimal_excel(self.hora_inicio)
+            final_fake  = hora_a_decimal_excel(self.hora_final)
+
+            horas = (final_fake - inicio_fake) - 1
             if horas < 0:
                 horas = 0
 
+            # Horas trabajadas con 2 decimales
             self.horas_trabajadas = round(horas, 2)
-            self.ramos_esperados = round(self.rendimiento * horas, 2)
+
+            # 2) Ramos base = rendimiento * horas_trabajadas
+            #    (aplicando tu regla de redondeo por la décima)
+            horas_dec = Decimal(str(self.horas_trabajadas))
+            rend_dec = Decimal(str(int(self.rendimiento)))
+
+            base_raw = rend_dec * horas_dec
+            base_floor = base_raw.to_integral_value(rounding=ROUND_FLOOR)
+            frac = base_raw - base_floor
+
+            decima = int((frac * Decimal("10")).to_integral_value(rounding=ROUND_FLOOR))
+
+            if decima >= 5 and frac > 0:
+                base_final = int(base_floor) + 1
+            else:
+                base_final = int(base_floor)
+
+            # Este es tu "Ramos base" del Excel (aunque se llame ramos_esperados)
+            self.ramos_esperados = float(base_final)
+
+            # 3) Ramos extras = reales - ramos base
             self.ramos_extras = round(self.bonches - self.ramos_esperados, 2)
 
-            if self.rendimiento > 0:
-                self.extras_por_hora = round(self.ramos_extras / self.rendimiento, 2)
-            else:
-                self.extras_por_hora = 0
+            # 4) Horas ganadas = ramos_extras / rendimiento
+            self.extras_por_hora = round(self.ramos_extras / self.rendimiento, 2) if self.rendimiento > 0 else 0
+
         else:
-            # Aún no hay horas → no se calcula nada
             self.horas_trabajadas = None
             self.ramos_esperados = None
             self.ramos_extras = None
             self.extras_por_hora = None
 
-    def __str__(self):
-        return f"Mesa {self.numero_mesa} - {self.fecha_entrada.date()}"
+
+    def save(self, *args, **kwargs):
+        print("🔵 [MODEL] save() llamado - ID:", self.id)
+        self.recalcular()
+        super().save(*args, **kwargs)
+
+
 
 # 🔥 NUEVO MODELO: JornadaLaboral - Movido a Rendimiento
 class JornadaLaboral(models.Model):
