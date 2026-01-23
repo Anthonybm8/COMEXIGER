@@ -1,34 +1,30 @@
-"""
-ASGI config for COMEXIGER project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.2/howto/deployment/asgi/
-"""
-
 import os
+from django.conf import settings
+from django.core.asgi import get_asgi_application
+from django.contrib.staticfiles.handlers import ASGIStaticFilesHandler
+
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
-from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'COMEXIGER.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "COMEXIGER.settings")
 
 django_asgi_app = get_asgi_application()
-# Importar routings de ambas apps
+
+# Importar routings
 import Aplicaciones.Rendimiento.routing
 import Aplicaciones.Disponibilidad.routing
 
+
+if settings.DEBUG:
+    django_asgi_app = ASGIStaticFilesHandler(django_asgi_app)
+
 application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
+    "http": django_asgi_app,
 
     "websocket": AuthMiddlewareStack(
         URLRouter(
             Aplicaciones.Rendimiento.routing.websocket_urlpatterns
-            +
-            Aplicaciones.Disponibilidad.routing.websocket_urlpatterns
+            + Aplicaciones.Disponibilidad.routing.websocket_urlpatterns
         )
     ),
 })
-
-

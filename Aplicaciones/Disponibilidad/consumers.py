@@ -8,6 +8,7 @@ class DisponibilidadConsumer(AsyncWebsocketConsumer):
             "disponibilidad",   # nombre del grupo
             self.channel_name
         )
+        
         await self.accept()
 
     async def disconnect(self, close_code):

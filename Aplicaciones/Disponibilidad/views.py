@@ -19,6 +19,7 @@ from .models import Disponibilidad, QRDisponibilidadUsado
 
 
 def inicio(request):
+   
     disponibilidades = Disponibilidad.objects.all()
     return render(request, 'disponibilidad.html', {
         'disponibilidades': disponibilidades
@@ -106,9 +107,9 @@ def api_disponibilidad_list(request):
         desde = request.query_params.get("desde")
         hasta = request.query_params.get("hasta")
         reciente = request.query_params.get("reciente")
-
+        
         qs = Disponibilidad.objects.all()
-
+        
         if fecha:
             qs = qs.filter(fecha_entrada__date=fecha)
 
@@ -127,7 +128,7 @@ def api_disponibilidad_list(request):
             if reciente == "true":
                 campo = "-" + campo
             qs = qs.order_by(campo)
-
+        
         return Response(DisponibilidadSerializer(qs, many=True).data)
 
     elif request.method == 'POST':
@@ -141,7 +142,7 @@ def api_disponibilidad_list(request):
         if not codigo or not mesa or not variedad or not medida:
             return Response({"error": "Datos incompletos"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # ⛔ BLOQUEO GLOBAL Y PERMANENTE
+
         if QRDisponibilidadUsado.objects.filter(qr_id=codigo).exists():
             return Response(
                 {"error": "Este QR ya fue utilizado en Disponibilidad"},
