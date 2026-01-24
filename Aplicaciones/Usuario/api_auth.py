@@ -8,7 +8,7 @@ def jwt_required(view_func):
     Requiere header:
       Authorization: Bearer <access_token>
 
-    Inyecta request.api_user (tu modelo Usuario) o request.api_admin=True si es admin hardcodeado
+    Inyecta request.api_user (Usuario) o request.api_admin=True si fuera admin.
     """
     @wraps(view_func)
     def _wrapped(request, *args, **kwargs):
@@ -30,16 +30,16 @@ def jwt_required(view_func):
         if payload.get("type") != "access":
             return JsonResponse({"success": False, "error": "Token incorrecto (se requiere access token)"}, status=401)
 
-        # Admin hardcodeado (opcional)
+        # (opcional) admin si lo usas
         if payload.get("tipo") == "admin":
             request.api_admin = True
             request.api_user = None
             return view_func(request, *args, **kwargs)
 
-        # Usuario normal
-        user_id = payload.get("user_id")
+        # ✅ Usuario normal: usamos "sub" (nuevo)
+        user_id = payload.get("sub") or payload.get("user_id")  # compatibilidad
         if not user_id:
-            return JsonResponse({"success": False, "error": "Token sin user_id"}, status=401)
+            return JsonResponse({"success": False, "error": "Token sin sub/user_id"}, status=401)
 
         try:
             request.api_user = Usuario.objects.get(id=int(user_id))

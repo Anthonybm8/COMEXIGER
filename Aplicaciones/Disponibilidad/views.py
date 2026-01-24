@@ -4,6 +4,9 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from datetime import datetime
 from django.utils import timezone
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -12,9 +15,17 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 
-from .models import Disponibilidad
 from .serializers import DisponibilidadSerializer
-from .models import Disponibilidad, QRDisponibilidadUsado
+from .models import Disponibilidad, QRDisponibilidadUsado,Variedad
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+
+from .models import Variedad
+from .serializers import VariedadSerializer
+
+from django.db.models.deletion import ProtectedError
 
 
 
@@ -36,27 +47,64 @@ def eliminar_disponibilidad(request, id):
 def procesar_edicion_disponibilidad(request):
     if request.method == "POST":
         try:
-            d = Disponibilidad.objects.get(id=request.POST["id"])
+            _id = (request.POST.get("id") or "").strip()
 
-            d.numero_mesa = request.POST["numero_mesa"]
-            d.variedad = request.POST["variedad"]
-            d.medida = request.POST["medida"]
-            d.stock = int(request.POST["stock"])
+            numero_mesa = request.POST.get("numero_mesa")
+            variedad = (request.POST.get("variedad") or "").strip()
+            medida = (request.POST.get("medida") or "").strip()
+            stock = int(request.POST.get("stock") or 0)
 
+            # fecha_entrada (datetime-local)
+            fecha_entrada = None
             if request.POST.get("fecha_entrada"):
-                d.fecha_entrada = datetime.strptime(
+                fecha_entrada = datetime.strptime(
                     request.POST["fecha_entrada"], "%Y-%m-%dT%H:%M"
                 )
+                # opcional: hacer aware
+                if timezone.is_naive(fecha_entrada):
+                    fecha_entrada = timezone.make_aware(fecha_entrada, timezone.get_current_timezone())
+            else:
+                fecha_entrada = timezone.now()
 
+            # fecha_salida
+            fecha_salida = None
             if request.POST.get("fecha_salida"):
-                d.fecha_salida = datetime.strptime(
+                fecha_salida = datetime.strptime(
                     request.POST["fecha_salida"], "%Y-%m-%dT%H:%M"
                 )
+                if timezone.is_naive(fecha_salida):
+                    fecha_salida = timezone.make_aware(fecha_salida, timezone.get_current_timezone())
+
+            # ==========================
+            # ✅ UPSERT (EDITA o CREA)
+            # ==========================
+            if _id:
+                d = Disponibilidad.objects.get(id=_id)  # edita
+                d.numero_mesa = numero_mesa
+                d.variedad = variedad
+                d.medida = medida
+                d.stock = stock
+                d.fecha_entrada = fecha_entrada
+                d.fecha_salida = fecha_salida
+                d.save()
+
+                msg = "Disponibilidad actualizada correctamente"
             else:
-                d.fecha_salida = None
+                # crea un registro nuevo (editar el 0)
+                d = Disponibilidad.objects.create(
+                    numero_mesa=numero_mesa,
+                    variedad=variedad,
+                    medida=medida,
+                    stock=stock,
+                    fecha_entrada=fecha_entrada,
+                    fecha_salida=fecha_salida
+                )
 
-            d.save()
+                msg = "Disponibilidad creada (se editó el 0) correctamente"
 
+            # ==========================
+            # ✅ WEBSOCKET igual que antes
+            # ==========================
             async_to_sync(get_channel_layer().group_send)(
                 "disponibilidad",
                 {
@@ -65,12 +113,13 @@ def procesar_edicion_disponibilidad(request):
                 }
             )
 
-            messages.success(request, "Disponibilidad actualizada correctamente")
+            messages.success(request, msg)
 
         except Exception as e:
             messages.error(request, f"Error: {e}")
 
         return redirect('dispo')
+
 
 
 # =========================
@@ -100,6 +149,9 @@ class DisponibilidadViewSet(viewsets.ModelViewSet):
 # =========================
 @api_view(['GET', 'POST'])
 def api_disponibilidad_list(request):
+    print("👤 user:", request.user, "auth:", request.user.is_authenticated)
+    print("🍪 cookies:", request.COOKIES)
+    print("📌 session keys:", list(request.session.keys()))
 
     if request.method == 'GET':
         ordenar = request.query_params.get("ordenar")
@@ -300,3 +352,134 @@ def api_disponibilidad_salida(request):
     )
 
     return Response(DisponibilidadSerializer(dispo).data, status=status.HTTP_200_OK)
+################################
+#API VARIEDAD#
+################################
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def variedades_api(request):
+    if request.method == "GET":
+        qs = Variedad.objects.all().order_by("nombre")
+        return Response(VariedadSerializer(qs, many=True).data)
+
+    nombre = (request.data.get("nombre") or "").strip()
+    if not nombre:
+        return Response({"detail": "El nombre es obligatorio."}, status=status.HTTP_400_BAD_REQUEST)
+
+    existe = Variedad.objects.filter(nombre__iexact=nombre).first()
+    if existe:
+        return Response(VariedadSerializer(existe).data, status=status.HTTP_200_OK)
+
+    nueva = Variedad.objects.create(nombre=nombre)
+    return Response(VariedadSerializer(nueva).data, status=status.HTTP_201_CREATED)
+
+from openpyxl import load_workbook
+from io import BytesIO
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def variedades_excel_api(request):
+    """
+    Recibe un archivo Excel con variedades.
+    Formatos aceptados:
+    - Columna con encabezado: 'variedad'
+    - O primera columna sin encabezado
+    """
+    file = request.FILES.get("file")
+    if not file:
+        return Response({"detail": "Debes enviar un archivo en 'file'."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        wb = load_workbook(filename=BytesIO(file.read()), data_only=True)
+        ws = wb.active
+
+        # leer filas
+        rows = list(ws.iter_rows(values_only=True))
+        if not rows:
+            return Response({"detail": "El Excel está vacío."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # detectar header
+        header = [str(x).strip().lower() if x is not None else "" for x in rows[0]]
+        idx = None
+        if "variedad" in header:
+            idx = header.index("variedad")
+            data_rows = rows[1:]
+        else:
+            idx = 0
+            data_rows = rows
+
+        nombres = []
+        for r in data_rows:
+            if not r or len(r) <= idx:
+                continue
+            val = r[idx]
+            if val is None:
+                continue
+            nombre = str(val).strip()
+            if nombre:
+                nombres.append(nombre)
+
+        # quitar duplicados (ignorando mayúsculas)
+        unicos = []
+        seen = set()
+        for n in nombres:
+            k = n.lower()
+            if k not in seen:
+                seen.add(k)
+                unicos.append(n)
+
+        creadas = 0
+        existentes = 0
+
+        for n in unicos:
+            if Variedad.objects.filter(nombre__iexact=n).exists():
+                existentes += 1
+            else:
+                Variedad.objects.create(nombre=n)
+                creadas += 1
+
+        return Response({
+            "detail": "ok",
+            "creadas": creadas,
+            "existentes": existentes,
+            "total": len(unicos)
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"detail": f"Error leyendo Excel: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+class VariedadViewSet(viewsets.ModelViewSet):
+    
+    queryset = Variedad.objects.all().order_by("nombre")
+    serializer_class = VariedadSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError:
+            return Response(
+                {"detail": "No puedes borrar esta variedad porque tiene stock/movimientos."},
+                status=status.HTTP_409_CONFLICT
+            )
+@require_http_methods(["DELETE"])
+def variedad_detail_api(request, pk):
+    try:
+        variedad = Variedad.objects.get(pk=pk)
+    except Variedad.DoesNotExist:
+        return JsonResponse({"detail": "La variedad no existe o ya fue eliminada."}, status=404)
+
+    # ✅ bloquear si hay disponibilidad relacionada (ajusta el campo según tu modelo)
+    # Caso 1: disponibilidad guarda variedad como texto -> comparar por nombre
+    tiene = Disponibilidad.objects.filter(variedad__iexact=variedad.nombre).exists()
+
+    # Caso 2 (si disponibilidad tiene FK): Disponibilidad.objects.filter(variedad_id=pk).exists()
+
+    if tiene:
+        return JsonResponse(
+            {"detail": "No puedes borrar esta variedad porque tiene stock/movimientos."},
+            status=409
+        )
+
+    variedad.delete()
+    return JsonResponse({}, status=204)

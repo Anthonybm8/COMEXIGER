@@ -24,3 +24,6 @@ class Usuario(models.Model):
     
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)
+    @property
+    def is_authenticated(self):
+        return True

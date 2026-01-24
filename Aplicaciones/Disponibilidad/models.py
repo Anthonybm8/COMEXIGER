@@ -27,3 +27,10 @@ class Disponibilidad(models.Model):
 
     def __str__(self):
         return f"Mesa {self.numero_mesa} - {self.variedad} ({self.stock})"
+class Variedad(models.Model):
+    nombre = models.CharField(max_length=120, unique=True)
+
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.nombre

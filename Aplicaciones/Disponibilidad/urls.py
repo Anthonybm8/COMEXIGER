@@ -18,4 +18,11 @@ urlpatterns = [
     path('api/disponibilidades/stats/', views.api_disponibilidad_stats, name='api-disponibilidad-stats'),
     
     path('api/disponibilidades/salida/', api_disponibilidad_salida),
+    
+    
+    
+    
+    path("api/variedades/", views.variedades_api, name="variedades_api"),
+    path("api/variedades/<int:pk>/", views.variedad_detail_api, name="variedad_detail_api"),
+    path("api/variedades/excel/", views.variedades_excel_api, name="variedades_excel_api"),
 ]

@@ -114,18 +114,37 @@
     </div>
 
     {% if messages %}
-        {% for mensaje in messages %}
-        <script>
-          Swal.fire({
-            title: "ERROR",
+    {% for mensaje in messages %}
+    <script>
+        // Determinar tipo de mensaje
+        let tipoIcono = "info";
+        let titulo = "Información";
+        let colorBoton = "#d1d02e";
+        
+        {% if mensaje.tags == 'error' %}
+            tipoIcono = "error";
+            titulo = "Error";
+            colorBoton = "#e74c3c";
+        {% elif mensaje.tags == 'success' %}
+            tipoIcono = "success";
+            titulo = "Éxito";
+            colorBoton = "#567d23";
+        {% elif mensaje.tags == 'warning' %}
+            tipoIcono = "warning";
+            titulo = "Advertencia";
+            colorBoton = "#f39c12";
+        {% endif %}
+
+        Swal.fire({
+            title: titulo,
             text: "{{ mensaje }}",
-            icon: "warning",
+            icon: tipoIcono,
             background: "#1c1c1c",
             color: "#ffffff",
-            confirmButtonColor: "#d1d02e"
-          });
-        </script>
-        {% endfor %}
-    {% endif %}
+            confirmButtonColor: colorBoton
+        });
+    </script>
+    {% endfor %}
+{% endif %}
 </body>
 </html>

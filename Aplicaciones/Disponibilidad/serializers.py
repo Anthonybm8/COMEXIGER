@@ -1,7 +1,12 @@
 from rest_framework import serializers
 from .models import Disponibilidad
 
+from .models import Variedad
 
+class VariedadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Variedad
+        fields = ["id", "nombre", "fecha_creacion"]
 class DisponibilidadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disponibilidad

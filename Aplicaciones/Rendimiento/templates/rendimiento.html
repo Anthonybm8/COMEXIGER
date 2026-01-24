@@ -437,7 +437,15 @@ document.getElementById("btnAplicarFiltros").addEventListener("click", function 
   if (fecha) url += `fecha=${fecha}&`;
   if (desde && hasta) url += `desde=${desde}&hasta=${hasta}&`;
 
-  fetch(url)
+  fetch("/api/rendimientos/", {
+    method: "POST",
+    credentials: "same-origin", // ✅ ESTO ES LO QUE TE FALTA
+    headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        },
+        body: JSON.stringify(payload)
+    })
     .then(r => r.json())
     .then(data => {
       table.clear();

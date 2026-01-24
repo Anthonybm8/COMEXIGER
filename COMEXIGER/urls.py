@@ -3,6 +3,8 @@ from django.urls import path, include
 from django.views.generic import RedirectView
 from django.urls import reverse_lazy
 
+from Aplicaciones.Usuario.refresh_api import refresh_token_api
+
 # Importar APIs de Usuario
 from Aplicaciones.Usuario.api_views import (
     registrar_usuario_api, 
@@ -42,6 +44,13 @@ urlpatterns = [
     path('api/jornada/finalizar/', finalizar_jornada_api, name='api_jornada_finalizar'),
     path('api/jornada/actual/', obtener_jornada_actual_api, name='api_jornada_actual'),
     path('api/jornada/historial/', obtener_historial_jornadas_api, name='api_jornada_historial'),
+    
+    
+    
+
+    path("api/token/refresh/", refresh_token_api, name="api_token_refresh"),
+
+
 ]
 
 # Debug

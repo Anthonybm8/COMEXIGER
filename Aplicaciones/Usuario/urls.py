@@ -11,5 +11,8 @@ urlpatterns = [
     path('procesar_edicion_usuario', views.procesar_edicion_usuario, name='procesar_edicion_usuario'),
     path('eliminar_usuario/<int:id>', views.eliminar_usuario, name='eliminar_usuario'),
     
+    
+    
+    
     # NO INCLUIR RUTAS API AQUÍ - van en COMEXIGER/urls.py
 ]
