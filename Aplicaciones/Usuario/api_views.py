@@ -3,7 +3,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import make_password
 import json
+from .api_auth import jwt_required
 from .models import Usuario, Mesa  # Asegúrate de importar Mesa también
+from .jwt_utils import crear_access_token, crear_refresh_token
 
 @csrf_exempt
 def registrar_usuario_api(request):
@@ -84,30 +86,46 @@ def login_usuario_api(request):
     """
     API para login desde Flutter
     POST: http://localhost:8000/api/login/
+    Devuelve access_token y refresh_token
     """
     if request.method != "POST":
         return JsonResponse({
             "success": False,
             "error": "Método no permitido. Use POST"
         }, status=405)
-    
+
     try:
         # 1. Obtener datos
         data = json.loads(request.body.decode("utf-8"))
-        username = data.get('username', '').strip()
-        password = data.get('password', '').strip()
-        
+        username = data.get("username", "").strip()
+        password = data.get("password", "").strip()
+
         if not username or not password:
             return JsonResponse({
                 "success": False,
                 "error": "Usuario y contraseña son requeridos"
             }, status=400)
-        
-        # 2. Credenciales de admin (hardcodeado como en tu views.py)
+
+        # =====================================================
+        # 2. ADMIN HARDCODEADO (comexad)
+        # =====================================================
         if username == "comexad" and password == "Comexiger2025":
+            access = crear_access_token(
+                {"tipo": "admin", "username": username},
+                minutes=120
+            )
+            refresh = crear_refresh_token(
+                {"tipo": "admin", "username": username},
+                days=7
+            )
+
             return JsonResponse({
                 "success": True,
                 "message": "Login exitoso como administrador",
+                "tokens": {
+                    "access": access,
+                    "refresh": refresh
+                },
                 "data": {
                     "username": username,
                     "tipo": "admin",
@@ -115,49 +133,75 @@ def login_usuario_api(request):
                     "apellidos": "System"
                 }
             })
-        
-        # 3. Buscar usuario en base de datos
+
+        # =====================================================
+        # 3. USUARIO NORMAL
+        # =====================================================
         try:
             usuario = Usuario.objects.get(username=username)
-            
-            # 4. Verificar contraseña
-            from django.contrib.auth.hashers import check_password
-            if check_password(password, usuario.password):
-                return JsonResponse({
-                    "success": True,
-                    "message": "Login exitoso",
-                    "data": {
-                        "id": usuario.id,
-                        "nombres": usuario.nombres,
-                        "apellidos": usuario.apellidos,
-                        "mesa": usuario.mesa,
-                        "cargo": usuario.cargo,
-                        "username": usuario.username,
-                        "tipo": "usuario"
-                    }
-                })
-            else:
-                return JsonResponse({
-                    "success": False,
-                    "error": "Credenciales incorrectas"
-                }, status=401)
-                
         except Usuario.DoesNotExist:
             return JsonResponse({
                 "success": False,
                 "error": "Usuario no encontrado"
             }, status=404)
-            
+
+        # 4. Verificar contraseña
+        if not check_password(password, usuario.password):
+            return JsonResponse({
+                "success": False,
+                "error": "Credenciales incorrectas"
+            }, status=401)
+
+        # 5. Crear tokens JWT
+        access = crear_access_token(
+            {
+                "tipo": "usuario",
+                "user_id": usuario.id,
+                "username": usuario.username
+            },
+            minutes=60
+        )
+
+        refresh = crear_refresh_token(
+            {
+                "tipo": "usuario",
+                "user_id": usuario.id,
+                "username": usuario.username
+            },
+            days=7
+        )
+
+        # 6. Respuesta final
+        return JsonResponse({
+            "success": True,
+            "message": "Login exitoso",
+            "tokens": {
+                "access": access,
+                "refresh": refresh
+            },
+            "data": {
+                "id": usuario.id,
+                "nombres": usuario.nombres,
+                "apellidos": usuario.apellidos,
+                "mesa": usuario.mesa,
+                "cargo": usuario.cargo,
+                "username": usuario.username,
+                "tipo": "usuario"
+            }
+        })
+
     except json.JSONDecodeError:
         return JsonResponse({
             "success": False,
             "error": "JSON inválido en el cuerpo de la solicitud"
         }, status=400)
+
     except Exception as e:
         return JsonResponse({
             "success": False,
             "error": f"Error del servidor: {str(e)}"
         }, status=500)
+
 
 @csrf_exempt
 def obtener_mesas_api(request):
