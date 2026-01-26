@@ -7,7 +7,7 @@ import json
 
 from .models import Usuario, Mesa
 from .jwt_utils import crear_access_token, crear_refresh_token
-
+from Aplicaciones.Usuario.jwt_decorators import jwt_required
 
 @csrf_exempt
 def registrar_usuario_api(request):
@@ -140,6 +140,7 @@ def login_usuario_api(request):
 
 
 @csrf_exempt
+@jwt_required
 def obtener_mesas_api(request):
     """
     API para obtener todas las mesas registradas

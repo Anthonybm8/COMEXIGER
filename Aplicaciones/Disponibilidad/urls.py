@@ -1,11 +1,13 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+
 from . import views
-from .views import api_disponibilidad_list, api_disponibilidad_detail, api_disponibilidad_stats, api_disponibilidad_salida
+from .views import api_disponibilidad_list, api_disponibilidad_detail, api_disponibilidad_stats, api_disponibilidad_salida,VariedadViewSet
 
 router = DefaultRouter()
 router.register(r'disponibilidad', views.DisponibilidadViewSet, basename='disponibilidad')
 
+router.register(r'variedades', VariedadViewSet, basename='variedad')
 urlpatterns = [
 
     path('dispo', views.inicio, name='dispo'),
@@ -18,11 +20,8 @@ urlpatterns = [
     path('api/disponibilidades/stats/', views.api_disponibilidad_stats, name='api-disponibilidad-stats'),
     
     path('api/disponibilidades/salida/', api_disponibilidad_salida),
-    
-    
-    
-    
-    path("api/variedades/", views.variedades_api, name="variedades_api"),
-    path("api/variedades/<int:pk>/", views.variedad_detail_api, name="variedad_detail_api"),
+
+   
+
     path("api/variedades/excel/", views.variedades_excel_api, name="variedades_excel_api"),
 ]

@@ -22,3 +22,6 @@ class RendimientoConsumer(AsyncWebsocketConsumer):
             "type": "send_rendimiento",
             "data": event.get("data", {})
         }))
+        # ✅ DEBE llamarse EXACTO igual que el "type" del group_send
+    async def nuevo_rendimiento(self, event):
+        await self.send(text_data=json.dumps(event["data"]))

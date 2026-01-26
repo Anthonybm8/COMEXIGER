@@ -1,5 +1,14 @@
 {% extends 'plantilla.html' %}
 {% load static %}
+
+{% block head %}
+{{ block.super }}
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+{% endblock %}
+
 {% block body %}
 
 <br>
@@ -29,14 +38,16 @@
                     <thead class="table-dark">
                         <tr>
                             <th rowspan="2" class="text-start">Variedades</th>
-                            <th colspan="5">Medidas</th>
+                            <th colspan="7">Medidas</th>
                         </tr>
                         <tr>
+                            <th>OPE</th>
                             <th>40 cm</th>
                             <th>50 cm</th>
                             <th>60 cm</th>
                             <th>70 cm</th>
                             <th>80 cm</th>
+                            <th>90 cm</th>
                         </tr>
                     </thead>
                     <tbody id="tbody_matriz">
@@ -87,7 +98,7 @@
                         <div class="col-md-6">
                             <label class="fw-bold">Medida</label>
                             <input class="form-control" type="text" name="medida" id="edit_medida" required>
-                            <small class="text-muted">Ej: 40 cm, 50 cm…</small>
+                            <small class="text-muted">Ej: OPE, 40 cm, 50 cm…</small>
                         </div>
 
                         <div class="col-md-6">
@@ -159,6 +170,7 @@
             </div>
 
             <div class="modal-body">
+
                 <div class="alert alert-info">
                     <b>Formato del Excel:</b>
                     <ul class="mb-0">
@@ -167,15 +179,50 @@
                     </ul>
                 </div>
 
-                <input type="file" id="inputExcelVariedades" class="form-control" accept=".xlsx,.xls">
+                <!-- ✅ TARJETA MEJORADA -->
+                <div class="card border-0 shadow-sm excel-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+                            <div>
+                                <div class="fw-bold mb-1"><i class="fa fa-cloud-upload"></i> Cargar archivo</div>
+                                <div class="text-muted small">
+                                    Selecciona un .xlsx / .xls y se subirá automáticamente.
+                                </div>
+                            </div>
 
-                <div class="mt-3 d-flex gap-2 flex-wrap">
-                    <button type="button" class="btn btn-success" id="btnSubirExcelBD">
-                        <i class="fa fa-upload"></i> Subir a BD
-                    </button>
+                            <span class="badge rounded-pill text-bg-secondary" id="excelEstadoBadge">Sin archivo</span>
+                        </div>
+
+                        <hr class="my-3">
+
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-8">
+                                <input type="file" id="inputExcelVariedades" class="form-control" accept=".xlsx,.xls">
+                                <small class="text-muted d-block mt-1">
+                                    Tip: evita filas vacías y nombres repetidos.
+                                </small>
+                            </div>
+
+                            <div class="col-md-4 d-flex gap-2">
+                                <button type="button" class="btn btn-success w-100" id="btnSubirExcelBD">
+                                    <i class="fa fa-upload"></i> Subir
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnLimpiarExcel" title="Quitar archivo" disabled>
+                                    <i class="fa fa-eraser"></i>
+                                </button>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="progress d-none" id="excelProgressWrap" style="height: 10px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" id="excelProgressBar" style="width: 100%"></div>
+                                </div>
+                                <div class="mt-2 small" id="excelResultado"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                <!-- ✅ /TARJETA MEJORADA -->
 
-                <div class="mt-3 small text-muted" id="excelResultado"></div>
             </div>
 
             <div class="modal-footer">
@@ -211,7 +258,38 @@
 
     .modal-content { border-radius: 18px; }
     .modal-header { border-top-left-radius: 18px; border-top-right-radius: 18px; }
+
+    /* Excel card */
+    .excel-card { border-radius: 16px; }
+    .excel-card .card-body { border-radius: 16px; }
+
+    /* DataTables */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter { margin-bottom: 10px; }
+    .dt-buttons { margin-bottom: 10px; }
+    .dt-buttons .btn {
+        margin-right: 5px;
+        margin-bottom: 5px;
+        font-size: 0.875rem;
+    }
+    .dataTables_info { padding-top: 8px; color: #6c757d; }
+    .dataTables_paginate { margin-top: 10px; }
 </style>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 
 <script>
 function getCookie(name) {
@@ -246,17 +324,25 @@ function cerrarModalSeguro(modalId) {
   }, 200);
 }
 
-const MEDIDAS = ["40", "50", "60", "70", "80"];
+/* ✅ Medidas EXACTAS */
+const MEDIDAS = ["OPE","40","50","60","70","80","90"];
 let matriz = {};
 let VAR_MAP = {};
+let VAR_SET = new Set();   // ✅ Bloqueo real de duplicados SIEMPRE
+
+let dataTable = null;
 
 function normalizarTexto(t) {
   return (t || "").toString().trim().toLowerCase();
 }
+
 function normalizarMedida(m) {
-  const x = (m || "").toString().toLowerCase().replace(/\s/g, "");
-  return x.replace("cm", "");
+  const raw = (m || "").toString().trim();
+  const low = raw.toLowerCase().replace(/\s/g, "");
+  if (low.startsWith("ope")) return "OPE";
+  return low.replace("cm", ""); // "40cm" -> "40"
 }
+
 function claseStock(valor) {
   const v = parseInt(valor || 0);
   if (v <= 0) return "stock-0";
@@ -264,18 +350,39 @@ function claseStock(valor) {
   return "stock-ok";
 }
 
+function etiquetaMedida(mm) {
+  return mm === "OPE" ? "OPE" : `${mm} cm`;
+}
+
+function invalidateDraw() {
+  if (dataTable && $.fn.DataTable.isDataTable('#tabla_matriz')) {
+    dataTable.rows().invalidate().draw(false);
+  }
+}
+
+/* ✅ NO DUPLICADOS + actualiza ID + SIEMPRE alimenta VAR_SET */
 function agregarFilaVariedadSiNoExiste(nombreVariedad, variedadId="") {
   const vKey = normalizarTexto(nombreVariedad);
-  if (!vKey) return;
+  if (!vKey) return null;
 
-  VAR_MAP[vKey] = { id: variedadId || (VAR_MAP[vKey]?.id || ""), nombre: nombreVariedad };
+  // ✅ set para bloquear duplicados en TODOS lados
+  VAR_SET.add(vKey);
 
+  // mantener mapa
+  const idActual = VAR_MAP[vKey]?.id || "";
+  VAR_MAP[vKey] = { id: variedadId || idActual, nombre: nombreVariedad };
+
+  // si ya existe en DOM, solo actualiza id y retorna
   let fila = document.querySelector(`#tbody_matriz tr[data-var="${vKey}"]`);
   if (fila) {
-    if (variedadId) fila.dataset.variedadId = variedadId;
-    return;
+    if (variedadId) fila.dataset.variedadId = variedadId; // ✅ siempre
+    if (variedadId && VAR_MAP[vKey]) VAR_MAP[vKey].id = variedadId;
+    return fila;
   }
 
+
+
+  // crear fila
   fila = document.createElement("tr");
   fila.setAttribute("data-var", vKey);
   fila.dataset.variedadId = variedadId || "";
@@ -293,10 +400,14 @@ function agregarFilaVariedadSiNoExiste(nombreVariedad, variedadId="") {
   MEDIDAS.forEach(mm => {
     const td = document.createElement("td");
     td.setAttribute("data-med", mm);
+
     td.dataset.id = "";
     td.dataset.variedad = nombreVariedad;
-    td.dataset.medida = `${mm} cm`;
+    td.dataset.medida = etiquetaMedida(mm);
     td.dataset.stock = 0;
+    td.dataset.mesa = "";
+    td.dataset.fecha_entrada = "";
+    td.dataset.fecha_salida = "";
 
     td.innerHTML = `
       <div class="cell-wrap">
@@ -307,14 +418,21 @@ function agregarFilaVariedadSiNoExiste(nombreVariedad, variedadId="") {
     fila.appendChild(td);
   });
 
-  document.getElementById("tbody_matriz").appendChild(fila);
+  // ✅ Si DataTables está activo, agrega usando su API (si no, al DOM normal)
+  if (dataTable && $.fn.DataTable.isDataTable('#tabla_matriz')) {
+    dataTable.row.add(fila).draw(false);
+  } else {
+    document.getElementById("tbody_matriz").appendChild(fila);
+  }
+  return fila;
+
 }
 
 function cargarVariedadesBD() {
   return fetch("/api/variedades/", { credentials: "same-origin" })
     .then(r => r.json())
     .then(lista => {
-      lista.forEach(v => agregarFilaVariedadSiNoExiste(v.nombre, v.id));
+      (lista || []).forEach(v => agregarFilaVariedadSiNoExiste(v.nombre, v.id));
     });
 }
 
@@ -330,7 +448,7 @@ function resetearTablaACero() {
       td.dataset.id = "";
       td.dataset.mesa = "";
       td.dataset.variedad = nombre;
-      td.dataset.medida = `${mm} cm`;
+      td.dataset.medida = etiquetaMedida(mm);
       td.dataset.stock = 0;
       td.dataset.fecha_entrada = "";
       td.dataset.fecha_salida = "";
@@ -348,6 +466,7 @@ function resetearTablaACero() {
   });
 }
 
+/* ✅ setCelda guarda id/mesa/fechas para EDITAR bien */
 function setCelda(variedadOriginal, medidaOriginal, total, refItem) {
   const vKey = normalizarTexto(variedadOriginal);
   const mKey = normalizarMedida(medidaOriginal);
@@ -357,7 +476,9 @@ function setCelda(variedadOriginal, medidaOriginal, total, refItem) {
   if (!matriz[vKey][mKey]) matriz[vKey][mKey] = { total: 0, refItem: null };
   matriz[vKey][mKey].total = parseInt(total || 0);
 
-  agregarFilaVariedadSiNoExiste(VAR_MAP[vKey]?.nombre || variedadOriginal, VAR_MAP[vKey]?.id || "");
+  const nombreMostrado = VAR_MAP[vKey]?.nombre || variedadOriginal;
+  const idVariedad = VAR_MAP[vKey]?.id || "";
+  agregarFilaVariedadSiNoExiste(nombreMostrado, idVariedad);
 
   const fila = document.querySelector(`#tbody_matriz tr[data-var="${vKey}"]`);
   if (!fila) return;
@@ -366,6 +487,7 @@ function setCelda(variedadOriginal, medidaOriginal, total, refItem) {
   if (!celda) return;
 
   const val = matriz[vKey][mKey].total || 0;
+
   celda.innerHTML = `
     <div class="cell-wrap">
       <span class="cell-stock ${claseStock(val)}">${val}</span>
@@ -374,20 +496,29 @@ function setCelda(variedadOriginal, medidaOriginal, total, refItem) {
   `;
 
   celda.dataset.stock = val;
-  celda.dataset.variedad = VAR_MAP[vKey]?.nombre || variedadOriginal;
-  celda.dataset.medida = `${mKey} cm`;
+  celda.dataset.variedad = nombreMostrado;
+  celda.dataset.medida = etiquetaMedida(mKey);
+
+  if (refItem) {
+    celda.dataset.id = refItem.id || "";
+    celda.dataset.mesa = refItem.numero_mesa || "";
+    celda.dataset.fecha_entrada = refItem.fecha_entrada || "";
+    celda.dataset.fecha_salida = refItem.fecha_salida || "";
+  }
 }
 
 function construirMatrizDesdeAPI(data) {
   matriz = {};
-  data.forEach(item => {
+
+  (data || []).forEach(item => {
     if (!item.variedad) return;
-    agregarFilaVariedadSiNoExiste(item.variedad, "");
+    const vKey = normalizarTexto(item.variedad);
+    agregarFilaVariedadSiNoExiste(item.variedad, VAR_MAP[vKey]?.id || "");
   });
 
   resetearTablaACero();
 
-  data.forEach(item => {
+  (data || []).forEach(item => {
     const vKey = normalizarTexto(item.variedad);
     const mKey = normalizarMedida(item.medida);
     if (!vKey || !MEDIDAS.includes(mKey)) return;
@@ -396,6 +527,7 @@ function construirMatrizDesdeAPI(data) {
     if (!matriz[vKey][mKey]) matriz[vKey][mKey] = { total: 0, refItem: null };
 
     matriz[vKey][mKey].total += parseInt(item.stock || 0);
+    matriz[vKey][mKey].refItem = item;
   });
 
   Object.keys(matriz).forEach(vKey => {
@@ -403,7 +535,8 @@ function construirMatrizDesdeAPI(data) {
     MEDIDAS.forEach(mm => {
       const cel = matriz[vKey][mm];
       const val = cel ? cel.total : 0;
-      setCelda(nombre, `${mm} cm`, val, null);
+      const ref = cel ? cel.refItem : null;
+      setCelda(nombre, etiquetaMedida(mm), val, ref);
     });
   });
 }
@@ -411,51 +544,311 @@ function construirMatrizDesdeAPI(data) {
 function cargarMatriz(url="/api/disponibilidades/") {
   return fetch(url, { credentials: "same-origin" })
     .then(r => r.json())
-    .then(data => construirMatrizDesdeAPI(data))
+    .then(data => {
+      construirMatrizDesdeAPI(data);
+      setTimeout(initDataTables, 100);
+    })
     .catch(err => console.error("❌ Error carga matriz disponibilidad:", err));
 }
 
+/* ✅ Modal editar */
 function abrirModalEdicionDesdeCelda(td) {
   const variedad = td.dataset.variedad || "";
   const medida = td.dataset.medida || "";
   const stock = td.dataset.stock || 0;
+  const idRegistro = td.dataset.id || "";
 
   document.getElementById("editInfoVar").textContent = variedad || "—";
   document.getElementById("editInfoMed").textContent = medida || "—";
 
+  document.getElementById("edit_id").value = idRegistro;
   document.getElementById("edit_variedad").value = variedad;
   document.getElementById("edit_medida").value = medida;
   document.getElementById("edit_stock").value = stock;
 
-  const now = new Date();
-  const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0,16);
-  document.getElementById("edit_fecha_entrada").value = localISO;
+  document.getElementById("edit_mesa").value = td.dataset.mesa || "";
+
+  const fe = td.dataset.fecha_entrada ? isoToDatetimeLocal(td.dataset.fecha_entrada) : "";
+  const fs = td.dataset.fecha_salida ? isoToDatetimeLocal(td.dataset.fecha_salida) : "";
+
+  if (fe) document.getElementById("edit_fecha_entrada").value = fe;
+  else {
+    const now = new Date();
+    const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+    document.getElementById("edit_fecha_entrada").value = localISO;
+  }
+  document.getElementById("edit_fecha_salida").value = fs;
 
   const modal = new bootstrap.Modal(document.getElementById("modalEditarCelda"));
   modal.show();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+/* DataTables */
+function initDataTables() {
+  if (dataTable !== null && $.fn.DataTable.isDataTable('#tabla_matriz')) {
+    dataTable.destroy();
+    dataTable = null;
+  }
+  if ($('#tbody_matriz tr').length === 0) return;
 
-  cargarVariedadesBD().then(() => cargarMatriz());
+  dataTable = $('#tabla_matriz').DataTable({
+    order: [],
+    ordering: false,
+    responsive: true,
+    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+         '<"row"<"col-sm-12"tr>>' +
+         '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>' +
+         '<"row"<"col-sm-12"B>>',
+    buttons: [
+      { extend: 'copy',  text: '<i class="fa fa-copy"></i> Copiar', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' } },
+      { extend: 'csv',   text: '<i class="fa fa-file-csv"></i> CSV', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' }, filename: 'disponibilidad_' + new Date().toISOString().slice(0, 10) },
+      { extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' }, filename: 'disponibilidad_' + new Date().toISOString().slice(0, 10) },
+      { extend: 'pdf',   text: '<i class="fa fa-file-pdf"></i> PDF', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' }, filename: 'disponibilidad_' + new Date().toISOString().slice(0, 10) },
+      { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' } },
+      { extend: 'colvis', text: '<i class="fa fa-columns"></i> Columnas', className: 'btn btn-sm btn-outline-secondary' }
+    ],
+    columnDefs: [
+      { targets: 0, className: 'text-start', orderable: false },
+      { targets: '_all', className: 'text-center', orderable: false }
+    ],
+    language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+    pageLength: 25,
+    autoWidth: false,
+    drawCallback: function() { reapplyEventListeners(); },
+    initComplete: function() { reapplyEventListeners(); }
+  });
+}
 
-  document.getElementById("btnRefrescar").addEventListener("click", () => {
-    cargarVariedadesBD().then(() => cargarMatriz());
+/* ✅ Delegación eventos */
+function reapplyEventListeners() {
+  $('#tabla_matriz').off('click', 'td[data-med]').on('click', 'td[data-med]', function(e) {
+    e.stopPropagation();
+    abrirModalEdicionDesdeCelda(this);
   });
 
-  document.addEventListener("click", function(e) {
-    const td = e.target.closest("#tabla_matriz tbody td[data-med]");
-    if (!td) return;
-    abrirModalEdicionDesdeCelda(td);
+  $('#tabla_matriz').off('click', '.btnEliminarVariedad').on('click', '.btnEliminarVariedad', function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    let fila = $(this).closest('tr');
+
+    // ✅ Si DataTables Responsive creó una fila "child", la real es la anterior
+    if (fila.hasClass('child')) fila = fila.prev();
+
+    const nombre = fila.find('.var-name').text().trim() || "—";
+    const vKey = normalizarTexto(nombre);
+
+    // ✅ leer ID desde el TR real
+    let variedadId = fila[0].dataset.variedadId || fila.attr('data-variedad-id') || "";
+
+    // ✅ fallback al mapa
+    if (!variedadId && VAR_MAP[vKey]?.id) {
+      variedadId = VAR_MAP[vKey].id;
+      fila[0].dataset.variedadId = variedadId;
+    }
+
+
+    if (!variedadId) {
+      Swal.fire("Error", "No se encontró el ID de la variedad. Refresca y vuelve a intentar.", "error");
+      return;
+    }
+
+    Swal.fire({
+      title: "¿Eliminar variedad?",
+      text: `Se eliminará la variedad: ${nombre}`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#dc3545",
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      fetch(`/api/variedades/${variedadId}/`, {
+        method: "DELETE",
+        credentials: "same-origin",
+        headers: { "X-CSRFToken": getCookie("csrftoken") }
+      })
+      .then(async (resp) => {
+        if (resp.status === 204 || resp.status === 404) {
+          if (dataTable && $.fn.DataTable.isDataTable('#tabla_matriz')) {
+            dataTable.row(fila[0]).remove().draw(false);
+          } else {
+            fila.remove();
+          }
+
+          VAR_SET.delete(vKey);
+          delete VAR_MAP[vKey];
+          delete matriz[vKey];
+
+          Swal.fire(
+            resp.status === 204 ? "Eliminado" : "Aviso",
+            resp.status === 204 ? "La variedad fue eliminada." : "La variedad no existe o ya fue eliminada.",
+            resp.status === 204 ? "success" : "info"
+          );
+          return;
+        }
+
+        if (resp.status === 409) {
+          const data = await resp.json().catch(() => ({}));
+          Swal.fire("No se pudo eliminar", data.detail || "No puedes borrar esta variedad porque tiene stock/movimientos.", "error");
+          return;
+        }
+
+        const data = await resp.json().catch(() => ({}));
+        Swal.fire("Error", data.detail || "No se pudo eliminar la variedad.", "error");
+      })
+      .catch(err => {
+        console.error(err);
+        Swal.fire("Error", "Error de red al eliminar.", "error");
+      });
+    });
+  });
+}
+
+/* ✅ Helpers UI Excel */
+function setExcelUIState({badgeText="Sin archivo", badgeClass="text-bg-secondary", loading=false, msgHTML=""} = {}) {
+  const badge = document.getElementById("excelEstadoBadge");
+  const btnUp = document.getElementById("btnSubirExcelBD");
+  const btnClr = document.getElementById("btnLimpiarExcel");
+  const wrap = document.getElementById("excelProgressWrap");
+  const out = document.getElementById("excelResultado");
+
+  badge.className = `badge rounded-pill ${badgeClass}`;
+  badge.textContent = badgeText;
+
+  btnUp.disabled = loading;
+  btnClr.disabled = loading;
+
+  if (loading) wrap.classList.remove("d-none");
+  else wrap.classList.add("d-none");
+
+  if (msgHTML !== undefined) out.innerHTML = msgHTML;
+}
+
+function limpiarExcelInput() {
+  const inp = document.getElementById("inputExcelVariedades");
+  inp.value = "";
+  document.getElementById("btnLimpiarExcel").disabled = true;
+  setExcelUIState({badgeText:"Sin archivo", badgeClass:"text-bg-secondary", loading:false, msgHTML:""});
+}
+
+function parseExcelResponse(resp) {
+  // ✅ Soporta múltiples formatos de backend
+  const creadasRaw = resp?.creadas ?? resp?.created ?? resp?.inserted ?? resp?.nuevas ?? resp?.nuevos ?? 0;
+  const existentesRaw = resp?.existentes ?? resp?.existing ?? resp?.duplicadas ?? resp?.repetidas ?? 0;
+
+  const creadas = Array.isArray(creadasRaw) ? creadasRaw.length : Number(creadasRaw || 0);
+  const existentes = Array.isArray(existentesRaw) ? existentesRaw.length : Number(existentesRaw || 0);
+  const total = Number(resp?.total ?? resp?.count ?? (creadas + existentes));
+
+  return { creadas, existentes, total, creadasRaw, existentesRaw };
+}
+
+async function recargarTodoLimpio() {
+  if (dataTable !== null && $.fn.DataTable.isDataTable('#tabla_matriz')) {
+    dataTable.destroy();
+    dataTable = null;
+  }
+
+  matriz = {};
+  VAR_MAP = {};
+  VAR_SET = new Set();
+  document.getElementById("tbody_matriz").innerHTML = "";
+
+  await cargarVariedadesBD();
+  await cargarMatriz();
+}
+
+/* ✅ Subida Excel (manual o automática) */
+async function subirExcelVariedades() {
+  const inp = document.getElementById("inputExcelVariedades");
+  const f = inp.files[0];
+  if (!f) {
+    Swal.fire("Advertencia","Selecciona un archivo Excel.","warning");
+    return;
+  }
+
+  setExcelUIState({
+    badgeText: "Subiendo...",
+    badgeClass: "text-bg-warning",
+    loading: true,
+    msgHTML: "⏳ Subiendo Excel..."
+  });
+
+  const fd = new FormData();
+  fd.append("file", f);
+  // 👇 SI tu backend espera otro nombre, cambia "file" por:
+  // fd.append("excel", f);  // o "archivo"
+
+  try {
+    const r = await fetch("/api/variedades/excel/", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "X-CSRFToken": getCookie("csrftoken") },
+      body: fd
+    });
+
+    const resp = await r.json().catch(() => ({}));
+
+    if (!r.ok) {
+      setExcelUIState({
+        badgeText: "Error",
+        badgeClass: "text-bg-danger",
+        loading: false,
+        msgHTML: `❌ ${resp.detail || "No se pudo procesar el Excel."}`
+      });
+      return;
+    }
+
+    const {creadas, existentes, total} = parseExcelResponse(resp);
+
+    setExcelUIState({
+      badgeText: "Listo",
+      badgeClass: "text-bg-success",
+      loading: false,
+      msgHTML: `✅ Listo. Creadas: <b>${creadas}</b> | Existentes: <b>${existentes}</b> | Total: <b>${total}</b>`
+    });
+
+    // ✅ Recargar para reflejar en tabla sin duplicar
+    await recargarTodoLimpio();
+
+    // ✅ opcional: cerrar modal automáticamente
+    // cerrarModalSeguro("modalSubirExcel");
+
+  } catch (e) {
+    console.error(e);
+    setExcelUIState({
+      badgeText: "Error",
+      badgeClass: "text-bg-danger",
+      loading: false,
+      msgHTML: "❌ Error de red subiendo el Excel."
+    });
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // carga inicial (secuencial)
+  cargarVariedadesBD().then(() => cargarMatriz());
+
+  // refrescar
+  document.getElementById("btnRefrescar").addEventListener("click", () => {
+    recargarTodoLimpio();
   });
 
   // agregar variedad
   document.getElementById("btnGuardarVariedad").addEventListener("click", async () => {
     const input = document.getElementById("inputNuevaVariedad");
     const nombre = (input.value || "").trim();
+    const vKey = normalizarTexto(nombre);
 
     if (!nombre) {
       Swal.fire({ title:"Advertencia", text:"Escribe el nombre de la variedad.", icon:"warning" });
+      return;
+    }
+    if (VAR_SET.has(vKey)) {
+      Swal.fire({ title:"Aviso", text:"La variedad ya existe (duplicado bloqueado).", icon:"warning" });
       return;
     }
 
@@ -470,117 +863,91 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const data = await resp.json().catch(() => ({}));
-
     if (!resp.ok) {
       Swal.fire({ title:"Error", text: data.detail || "No se pudo guardar la variedad.", icon:"error" });
       return;
     }
 
-    agregarFilaVariedadSiNoExiste(data.nombre || nombre, data.id || "");
+    // ✅ Soporta respuesta de ViewSet (root) y de tu api manual ({variedad:{...}})
+    const v = (data && data.variedad) ? data.variedad : data;
+
+    // toma id y nombre de forma segura
+    const nombreFinal = (v?.nombre || nombre).trim();
+    const idFinal = v?.id || v?.pk || "";
+
+    // agrega y asegura que la fila quede con ID
+    const filaNueva = agregarFilaVariedadSiNoExiste(nombreFinal, idFinal);
+    if (filaNueva && idFinal) filaNueva.dataset.variedadId = idFinal;
+
+    // asegura también el mapa (por si DataTables redibuja)
+    const vKeyFinal = normalizarTexto(nombreFinal);
+    VAR_MAP[vKeyFinal] = { id: idFinal, nombre: nombreFinal };
+    VAR_SET.add(vKeyFinal);
+
+
     input.value = "";
     cerrarModalSeguro("modalAgregarVariedad");
+
     Swal.fire({ title:"Éxito", text:"Variedad agregada correctamente.", icon:"success" });
+    setTimeout(reapplyEventListeners, 50);
   });
 
-  // subir excel
-  document.getElementById("btnSubirExcelBD").addEventListener("click", () => {
-    const f = document.getElementById("inputExcelVariedades").files[0];
-    if (!f) return Swal.fire("Advertencia","Selecciona un archivo Excel.","warning");
+  // ✅ Excel: auto-subir al seleccionar archivo
+  const inputExcel = document.getElementById("inputExcelVariedades");
+  const btnUp = document.getElementById("btnSubirExcelBD");
+  const btnClr = document.getElementById("btnLimpiarExcel");
 
-    const fd = new FormData();
-    fd.append("file", f);
-
-    const out = document.getElementById("excelResultado");
-    out.textContent = "⏳ Subiendo Excel...";
-
-    fetch("/api/variedades/excel/", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "X-CSRFToken": getCookie("csrftoken") },
-      body: fd
-    })
-    .then(r => r.json())
-    .then(resp => {
-      out.innerHTML = `✅ Listo. Creadas: <b>${resp.creadas}</b> | Existentes: <b>${resp.existentes}</b> | Total: <b>${resp.total}</b>`;
-      return cargarVariedadesBD().then(() => cargarMatriz());
-    })
-    .catch(() => out.textContent = "❌ Error subiendo el Excel.");
-  });
-
-  // ✅ eliminar variedad (ahora maneja 404 / 409 / 204)
-  document.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".btnEliminarVariedad");
-    if (!btn) return;
-
-    const fila = btn.closest("tr");
-    const variedadId = fila?.dataset?.variedadId;
-    const nombre = fila.querySelector(".var-name")?.textContent?.trim() || "—";
-
-    if (!variedadId) {
-      Swal.fire("Error", "No se encontró el ID de la variedad.", "error");
+  inputExcel.addEventListener("change", () => {
+    const f = inputExcel.files[0];
+    if (!f) {
+      limpiarExcelInput();
       return;
     }
-
-    const confirm = await Swal.fire({
-      title: "¿Eliminar variedad?",
-      text: `Se eliminará la variedad: ${nombre}`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#dc3545",
+    document.getElementById("btnLimpiarExcel").disabled = false;
+    setExcelUIState({
+      badgeText: "Archivo listo",
+      badgeClass: "text-bg-primary",
+      loading: false,
+      msgHTML: `📄 Archivo seleccionado: <b>${f.name}</b> (se subirá automáticamente)`
     });
 
-    if (!confirm.isConfirmed) return;
+    // ✅ auto upload
+    subirExcelVariedades();
+  });
 
-    try {
-      const resp = await fetch(`/api/variedades/${variedadId}/`, {
-        method: "DELETE",
-        credentials: "same-origin",
-        headers: { "X-CSRFToken": getCookie("csrftoken") }
-      });
+  btnUp.addEventListener("click", () => {
+    subirExcelVariedades();
+  });
 
-      if (resp.status === 204) {
-        fila.remove();
-        Swal.fire("Eliminado", "La variedad fue eliminada.", "success");
-        return;
-      }
-
-      if (resp.status === 404) {
-        fila.remove();
-        Swal.fire("Aviso", "La variedad no existe o ya fue eliminada.", "info");
-        return;
-      }
-
-      if (resp.status === 409) {
-        const data = await resp.json().catch(() => ({}));
-        Swal.fire("No se pudo eliminar", data.detail || "No puedes borrar esta variedad porque tiene stock/movimientos.", "error");
-        return;
-      }
-
-      const data = await resp.json().catch(() => ({}));
-      Swal.fire("Error", data.detail || "No se pudo eliminar la variedad.", "error");
-
-    } catch (err) {
-      console.error(err);
-      Swal.fire("Error", "Error de red al eliminar.", "error");
-    }
+  btnClr.addEventListener("click", () => {
+    limpiarExcelInput();
   });
 
   // websocket
-  const ws = new WebSocket(
-    (location.protocol === "https:" ? "wss" : "ws") +
-    "://" + window.location.host + "/ws/disponibilidad/"
-  );
+  try {
+    const ws = new WebSocket(
+      (location.protocol === "https:" ? "wss" : "ws") +
+      "://" + window.location.host + "/ws/disponibilidad/"
+    );
 
-  ws.onmessage = function(e) {
-    const data = JSON.parse(e.data);
-    if (data.variedad && data.medida) {
-      setCelda(data.variedad, data.medida, data.stock || 0, data);
-    }
-  };
+    ws.onmessage = function(e) {
+      const data = JSON.parse(e.data);
+      if (data.variedad && data.medida) {
+        setCelda(data.variedad, data.medida, data.stock || 0, data);
+        invalidateDraw();
+      }
+    };
 
+    ws.onerror = function(e) {
+      console.warn("WebSocket error:", e);
+    };
+
+    ws.onclose = function(e) {
+      console.log("WebSocket closed:", e);
+    };
+  } catch (e) {
+    console.log("WebSocket no disponible, continuando sin tiempo real");
+  }
 });
 </script>
-
 {% endblock %}

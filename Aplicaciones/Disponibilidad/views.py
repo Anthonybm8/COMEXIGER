@@ -24,26 +24,26 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import Variedad
 from .serializers import VariedadSerializer
-
+from Aplicaciones.Usuario.jwt_decorators import jwt_required
 from django.db.models.deletion import ProtectedError
 
 
+from Aplicaciones.Usuario.web_decorators import web_login_required
 
 def inicio(request):
-   
     disponibilidades = Disponibilidad.objects.all()
     return render(request, 'disponibilidad.html', {
         'disponibilidades': disponibilidades
     })
 
 
-
+@web_login_required
 def eliminar_disponibilidad(request, id):
     Disponibilidad.objects.get(id=id).delete()
     messages.success(request, "Disponibilidad eliminada correctamente")
     return redirect('dispo')
 
-
+@web_login_required
 def procesar_edicion_disponibilidad(request):
     if request.method == "POST":
         try:
@@ -215,7 +215,12 @@ def api_disponibilidad_list(request):
 
         if existente:
             existente.stock += 1
+
+            # ✅ CLAVE: si estaba cerrada porque llegó a 0, reabrirla
+            existente.fecha_salida = None
+
             existente.save()
+
 
             async_to_sync(get_channel_layer().group_send)(
                 "disponibilidad",
@@ -291,17 +296,20 @@ def api_disponibilidad_stats(request):
 from .models import Disponibilidad, QRDisponibilidadSalidaUsado
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def api_disponibilidad_salida(request):
     data = request.data
     codigo = data.get("qr_id")
+    mesa = data.get("numero_mesa")
     variedad = data.get("variedad")
     medida = data.get("medida")
 
-    if not codigo or not variedad or not medida:
+    if not codigo or mesa is None or not variedad or not medida:
         return Response(
-            {"error": "Datos incompletos: qr_id, variedad y medida son obligatorios"},
+            {"error": "Datos incompletos: qr_id, numero_mesa, variedad y medida son obligatorios"},
             status=status.HTTP_400_BAD_REQUEST
         )
+
 
     # ⛔ Si ya se restó este QR una vez, NO permitir otra vez
     if QRDisponibilidadSalidaUsado.objects.filter(qr_id=codigo).exists():
@@ -316,11 +324,13 @@ def api_disponibilidad_salida(request):
         dispo = (Disponibilidad.objects
                  .select_for_update()
                  .filter(
-                     fecha_salida__isnull=True,
-                     variedad=variedad,
-                     medida=medida,
-                     stock__gt=0
-                 )
+                    numero_mesa=mesa,
+                    fecha_salida__isnull=True,
+                    variedad=variedad,
+                    medida=medida,
+                    stock__gt=0
+                )
+
                  .order_by('fecha_entrada', 'id')
                  .first())
 
@@ -362,16 +372,27 @@ def variedades_api(request):
         qs = Variedad.objects.all().order_by("nombre")
         return Response(VariedadSerializer(qs, many=True).data)
 
-    nombre = (request.data.get("nombre") or "").strip()
-    if not nombre:
-        return Response({"detail": "El nombre es obligatorio."}, status=status.HTTP_400_BAD_REQUEST)
+    nombre_raw = (request.data.get("nombre") or "").strip()
+    if not nombre_raw:
+        return Response({"detail": "El nombre es obligatorio."}, status=400)
 
-    existe = Variedad.objects.filter(nombre__iexact=nombre).first()
-    if existe:
-        return Response(VariedadSerializer(existe).data, status=status.HTTP_200_OK)
+    # ✅ Normalizar (Explorer)
+    nombre = nombre_raw.lower().capitalize()
+
+    # ✅ Mensaje desde el backend
+    if Variedad.objects.filter(nombre__iexact=nombre).exists():
+        return Response(
+            {"detail": "La variedad ya se encuentra agregada."},
+            status=409
+        )
 
     nueva = Variedad.objects.create(nombre=nombre)
-    return Response(VariedadSerializer(nueva).data, status=status.HTTP_201_CREATED)
+    return Response(
+        {"detail": "Variedad agregada correctamente.", "variedad": VariedadSerializer(nueva).data},
+        status=201
+    )
+
+
 
 from openpyxl import load_workbook
 from io import BytesIO
@@ -447,39 +468,98 @@ def variedades_excel_api(request):
 
     except Exception as e:
         return Response({"detail": f"Error leyendo Excel: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from rest_framework.response import Response
+from openpyxl import load_workbook
+from io import BytesIO
+
 class VariedadViewSet(viewsets.ModelViewSet):
-    
     queryset = Variedad.objects.all().order_by("nombre")
     serializer_class = VariedadSerializer
+    permission_classes = [IsAuthenticated]
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        try:
-            self.perform_destroy(instance)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except ProtectedError:
+
+        tiene = Disponibilidad.objects.filter(variedad__iexact=instance.nombre).exists()
+        if tiene:
             return Response(
-                {"detail": "No puedes borrar esta variedad porque tiene stock/movimientos."},
+                {"detail": "No puedes borrar esta variedad porque esta siendo usada para almacenamiento ."},
                 status=status.HTTP_409_CONFLICT
             )
-@require_http_methods(["DELETE"])
-def variedad_detail_api(request, pk):
-    try:
-        variedad = Variedad.objects.get(pk=pk)
-    except Variedad.DoesNotExist:
-        return JsonResponse({"detail": "La variedad no existe o ya fue eliminada."}, status=404)
+        return super().destroy(request, *args, **kwargs)
 
-    # ✅ bloquear si hay disponibilidad relacionada (ajusta el campo según tu modelo)
-    # Caso 1: disponibilidad guarda variedad como texto -> comparar por nombre
-    tiene = Disponibilidad.objects.filter(variedad__iexact=variedad.nombre).exists()
+    # ✅ AQUÍ el excel SIN choque con /<pk>/
+    @action(detail=False, methods=["post"], url_path="excel")
+    def excel(self, request):
+        file = request.FILES.get("file")
+        if not file:
+            return Response({"detail": "Debes enviar un archivo en 'file'."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Caso 2 (si disponibilidad tiene FK): Disponibilidad.objects.filter(variedad_id=pk).exists()
+        try:
+            wb = load_workbook(filename=BytesIO(file.read()), data_only=True)
+            ws = wb.active
 
-    if tiene:
-        return JsonResponse(
-            {"detail": "No puedes borrar esta variedad porque tiene stock/movimientos."},
-            status=409
-        )
+            rows = list(ws.iter_rows(values_only=True))
+            if not rows:
+                return Response({"detail": "El Excel está vacío."}, status=status.HTTP_400_BAD_REQUEST)
 
-    variedad.delete()
-    return JsonResponse({}, status=204)
+            header = [str(x).strip().lower() if x is not None else "" for x in rows[0]]
+            if "variedad" in header:
+                idx = header.index("variedad")
+                data_rows = rows[1:]
+            else:
+                idx = 0
+                data_rows = rows
+
+            nombres = []
+            for r in data_rows:
+                if not r or len(r) <= idx:
+                    continue
+                val = r[idx]
+                if val is None:
+                    continue
+                nombre = str(val).strip()
+                if nombre:
+                    nombres.append(nombre)
+
+            # quitar duplicados por lower
+            seen = set()
+            unicos = []
+            for n in nombres:
+                k = n.lower()
+                if k not in seen:
+                    seen.add(k)
+                    unicos.append(n)
+
+            creadas = 0
+            existentes = 0
+
+            for n in unicos:
+                if Variedad.objects.filter(nombre__iexact=n).exists():
+                    existentes += 1
+                else:
+                    Variedad.objects.create(nombre=n)
+                    creadas += 1
+
+            return Response({
+                "detail": "ok",
+                "creadas": creadas,
+                "existentes": existentes,
+                "total": len(unicos)
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"detail": f"Error leyendo Excel: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])  # ✅ requiere token
+def listar_variedades_api(request):
+    variedades = Variedad.objects.all().order_by('nombre')
+    data = [{'id': v.id, 'nombre': v.nombre} for v in variedades]
+    return Response({'success': True, 'data': data, 'count': len(data)})

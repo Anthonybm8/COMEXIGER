@@ -15,18 +15,20 @@ from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 
 
-# ================== VISTAS WEB ==================
+from Aplicaciones.Usuario.web_decorators import web_login_required
 
+# ================== VISTAS WEB ==================
+@web_login_required
 def inicio(request):
     # ✅ Mostrar solo jornadas base (opcional pero recomendado)
     listadoRendimiento = Rendimiento.objects.filter(qr_id="JORNADA").order_by('-fecha_entrada')
     return render(request, 'rendimiento.html', {'rendimiento': listadoRendimiento})
 
-
+@web_login_required
 def nuevo_rendimiento(request):
     return render(request, "nuevo_rendimiento.html")
 
-
+@web_login_required
 def guardar_rendimiento(request):
     """
     Manual (web). Si no lo usas, puedes eliminar esta vista.
@@ -74,14 +76,14 @@ def guardar_rendimiento(request):
     messages.error(request, "Error al guardar rendimiento")
     return redirect('nuevo_rendimiento')
 
-
+@web_login_required
 def eliminar_rendimiento(request, id):
     rendimiento_eliminar = Rendimiento.objects.get(id=id)
     rendimiento_eliminar.delete()
     messages.success(request, "Rendimiento eliminado exitosamente")
     return redirect('rendimiento')
 
-
+@web_login_required
 def procesar_edicion_rendimiento(request):
     if request.method == "POST":
         try:

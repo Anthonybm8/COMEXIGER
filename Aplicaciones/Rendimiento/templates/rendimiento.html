@@ -8,569 +8,515 @@
 
 <br>
 <main class="container py-4"><br><br>
-    <h1 class="text-center">Listado de Rendimiento</h1>
-    <hr>
+  <h1 class="text-center">Listado de Rendimiento</h1>
+  <hr>
 
-    <!-- FILTROS Y ORDENAMIENTOS -->
-    <div class="card p-3 mb-4">
-        <div class="row g-3">
+  <!-- FILTROS Y ORDENAMIENTOS -->
+  <div class="card p-3 mb-4">
+    <div class="row g-3">
 
-            <!-- Ordenar por -->
-            <div class="col-md-3">
-                <label class="form-label fw-bold">Ordenar por</label>
-                <select id="ordenarPor" class="form-select">
-                    <option value="">-- Seleccionar --</option>
-                    <option value="mesa">Mesa</option>
-                    <option value="fecha">Fecha</option>
-                </select>
-            </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold">Ordenar por</label>
+        <select id="ordenarPor" class="form-select">
+          <option value="">-- Seleccionar --</option>
+          <option value="mesa">Mesa</option>
+          <option value="fecha">Fecha</option>
+        </select>
+      </div>
 
-            <!-- Más recientes / más antiguos -->
-            <div class="col-md-3">
-                <label class="form-label fw-bold">Mostrar</label>
-                <select id="ordenReciente" class="form-select">
-                    <option value="">-- Seleccionar --</option>
-                    <option value="true">Más recientes primero</option>
-                    <option value="false">Más antiguos primero</option>
-                </select>
-            </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold">Mostrar</label>
+        <select id="ordenReciente" class="form-select">
+          <option value="">-- Seleccionar --</option>
+          <option value="true">Más recientes primero</option>
+          <option value="false">Más antiguos primero</option>
+        </select>
+      </div>
 
-            <!-- Fecha exacta -->
-            <div class="col-md-3">
-                <label class="form-label fw-bold">Fecha exacta</label>
-                <input type="date" id="fechaExacta" class="form-control">
-            </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold">Fecha exacta</label>
+        <input type="date" id="fechaExacta" class="form-control">
+      </div>
 
-            <!-- Rango desde -->
-            <div class="col-md-3">
-                <label class="form-label fw-bold">Desde</label>
-                <input type="date" id="fechaDesde" class="form-control">
-            </div>
+      <div class="col-md-3">
+        <label class="form-label fw-bold">Desde</label>
+        <input type="date" id="fechaDesde" class="form-control">
+      </div>
 
-            <!-- Rango hasta -->
-            <div class="col-md-3 mt-3">
-                <label class="form-label fw-bold">Hasta</label>
-                <input type="date" id="fechaHasta" class="form-control">
-            </div>
+      <div class="col-md-3 mt-3">
+        <label class="form-label fw-bold">Hasta</label>
+        <input type="date" id="fechaHasta" class="form-control">
+      </div>
 
-            <!-- Botón aplicar -->
-            <div class="col-md-3 mt-4">
-                <button id="btnAplicarFiltros" type="button" class="btn btn-primary w-100">
-                    <i class="fa fa-filter"></i> Aplicar filtros
-                </button>
-            </div>
+      <div class="col-md-3 mt-4">
+        <button id="btnAplicarFiltros" type="button" class="btn btn-primary w-100">
+          <i class="fa fa-filter"></i> Aplicar filtros
+        </button>
+      </div>
 
-            <!-- Botón limpiar -->
-            <div class="col-md-3 mt-4">
-                <button id="btnLimpiarFiltros" type="button" class="btn btn-secondary w-100">
-                    <i class="fa fa-eraser"></i> Limpiar
-                </button>
-            </div>
+      <div class="col-md-3 mt-4">
+        <button id="btnLimpiarFiltros" type="button" class="btn btn-secondary w-100">
+          <i class="fa fa-eraser"></i> Limpiar
+        </button>
+      </div>
 
-        </div>
     </div>
+  </div>
 
-    <!-- TABLA -->
-    <table id="table_rendimiento" class="table table-striped table-bordered align-middle w-100">
-        <thead>
-            <tr class="table-success">
-                <!-- FECHA KEY OCULTA -->
-                <th style="display:none;">Fecha Key</th>
+  <!-- TABLA -->
+  <table id="table_rendimiento" class="table table-striped table-bordered align-middle w-100">
+    <thead>
+      <tr class="table-success">
+        <th style="display:none;">Fecha Key</th>
+        <th>ID</th>
+        <th>Mesa</th>
+        <th>Fecha</th>
+        <th>Rendimiento</th>
+        <th>Inicio</th>
+        <th>Final</th>
+        <th>Horas</th>
+        <th style="display:none;">Base</th>
+        <th>Ramos Base</th>
+        <th>Ramos realizados</th>
+        <th>Extras</th>
+        <th>Ext/Hora</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
 
-                <th style="display:none;">ID</th>
-                <th>Mesa</th>
-                <th>Fecha</th>
-                <th>Rendimiento</th>
-                <th>Inicio</th>
-                <th>Final</th>
-                <th>Horas</th>
-                <th style="display:none;" >Base</th>
-                <th>Ramos Base</th>
-                <th>Ramos realizados</th>
-                <th>Extras</th>
-                <th>Ext/Hora</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
+    <tbody>
+      {% for r in rendimiento %}
+      <tr>
+        <td style="display:none;">{{ r.fecha_entrada|date:"Y-m-d" }}</td>
 
-        <tbody>
-            {% for r in rendimiento %}
-            <tr>
-                <td style="display:none;">{{ r.fecha_entrada|date:"Y-m-d" }}</td>
+        <td>{{ r.id }}</td>
+        <td>{{ r.numero_mesa }}</td>
+        <td>{{ r.fecha_entrada|date:"d \\d\\e F \\d\\e Y H:i" }}</td>
 
-                <td style="display:none;">{{ r.id }}</td>
-                <td>{{ r.numero_mesa }}</td>
+        <td>{% if r.rendimiento %}{{ r.rendimiento }}{% else %}20{% endif %}</td>
 
-                <td>{{ r.fecha_entrada|date:"d \\d\\e F \\d\\e Y H:i" }}</td>
+        <td>{% if r.hora_inicio %}{{ r.hora_inicio|date:"H:i" }}{% else %}-{% endif %}</td>
+        <td>{% if r.hora_final %}{{ r.hora_final|date:"H:i" }}{% else %}-{% endif %}</td>
 
-                <td>{% if r.rendimiento %}{{ r.rendimiento }}{% else %}20{% endif %}</td>
+        <td>{{ r.horas_trabajadas|default_if_none:"-" }}</td>
+        <td style="display:none;">{{ r.ramos_base|default_if_none:"-" }}</td>
+        <td>{{ r.ramos_esperados|default_if_none:"-" }}</td>
+        <td>{{ r.bonches|default:"0" }}</td>
+        <td>{{ r.ramos_extras|default_if_none:"-" }}</td>
+        <td>{{ r.extras_por_hora|default_if_none:"-" }}</td>
 
-                <td>{% if r.hora_inicio %}{{ r.hora_inicio|date:"H:i" }}{% else %}-{% endif %}</td>
-                <td>{% if r.hora_final %}{{ r.hora_final|date:"H:i" }}{% else %}-{% endif %}</td>
+        <td>
+          <!-- ✅ EDITAR: ABRE MODAL GLOBAL Y ENVÍA DATA -->
+          <button
+            type="button"
+            class="btn btn-outline-warning btn-editar"
+            data-bs-toggle="modal"
+            data-bs-target="#modalEditarGlobal"
+            data-id="{{ r.id }}"
+            data-mesa="{{ r.numero_mesa }}"
+            data-fecha="{{ r.fecha_entrada|date:'Y-m-d\\TH:i' }}"
+            data-inicio="{% if r.hora_inicio %}{{ r.hora_inicio|date:'Y-m-d\\TH:i' }}{% endif %}"
+            data-final="{% if r.hora_final %}{{ r.hora_final|date:'Y-m-d\\TH:i' }}{% endif %}"
+            data-bonches="{{ r.bonches|default:'0' }}"
+            data-rendimiento="{% if r.rendimiento %}{{ r.rendimiento }}{% else %}20{% endif %}">
+            <i class="fa fa-pen"></i>
+          </button>
 
-                <td>{{ r.horas_trabajadas|default_if_none:"-" }}</td>
-                <td style="display:none;">{{ r.ramos_base|default_if_none:"-" }}</td>
-                <td>{{ r.ramos_esperados|default_if_none:"-" }}</td>
-                <td>{{ r.bonches|default:"0" }}</td>
-                <td>{{ r.ramos_extras|default_if_none:"-" }}</td>
-                <td>{{ r.extras_por_hora|default_if_none:"-" }}</td>
+          <!-- ✅ ELIMINAR (URL CORRECTA SEGÚN TU urls.py) -->
+          <a href="{% url 'eliminar_rendimiento' r.id %}"
+             class="btn btn-outline-danger btn-eliminar"
+             data-id="{{ r.id }}"
+             data-nombre="Mesa {{ r.numero_mesa }} - {{ r.fecha_entrada|date:'d/m/Y H:i' }}">
+            <i class="fa fa-trash"></i>
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-                <td>
-                    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEditar{{ r.id }}">
-                        <i class="fa fa-pen"></i>
-                    </button>
+  <!-- ✅ MODAL GLOBAL (UNO SOLO, SIEMPRE EXISTE) -->
+  <div class="modal fade" id="modalEditarGlobal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title">Editar Rendimiento</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
 
-                    <!-- BOTÓN ELIMINAR CON CLASE btn-eliminar -->
-                    <a href="{% url 'eliminar_rendimiento' r.id %}" 
-                       class="btn btn-outline-danger btn-eliminar"
-                       data-id="{{ r.id }}"
-                       data-nombre="Mesa {{ r.numero_mesa }} - {{ r.fecha_entrada|date:'d/m/Y H:i' }}">
-                        <i class="fa fa-trash"></i>
-                    </a>
+        <div class="modal-body">
+          <form action="{% url 'procesar_edicion_rendimiento' %}" method="post">
+            {% csrf_token %}
 
-                    <!-- MODAL EDITAR -->
-                    <div class="modal fade" id="modalEditar{{ r.id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header bg-warning text-dark">
-                                    <h5 class="modal-title">Editar Rendimiento</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
+            <input type="hidden" name="id" id="edit_id">
 
-                                <div class="modal-body">
-                                    <form action="{% url 'procesar_edicion_rendimiento' %}" method="post" class="form_rendimiento">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="id" value="{{ r.id }}">
+            <label>Número de Mesa</label>
+            <input class="form-control" type="number" name="numero_mesa" id="edit_mesa" required><br>
 
-                                        <label>Número de Mesa</label>
-                                        <input class="form-control" type="number" name="numero_mesa" value="{{ r.numero_mesa }}" required><br>
+            <label>Rendimiento</label>
+            <input class="form-control" type="number" name="rendimiento" id="edit_rendimiento" required><br>
 
-                                        <label>Rendimiento</label>
-                                        <input class="form-control" type="number" name="rendimiento"
-                                               value="{% if r.rendimiento %}{{ r.rendimiento }}{% else %}20{% endif %}" required><br>
+            <label>Inicio</label>
+            <input class="form-control" type="datetime-local" name="hora_inicio" id="edit_inicio"><br>
 
-                                        <!-- ✅ AHORA EDITABLE EN FORMATO QUE TU VIEW SOPORTA -->
-                                        <label>Inicio</label>
-                                        <input class="form-control" type="datetime-local" name="hora_inicio"
-                                               value="{{ r.hora_inicio|date:'Y-m-d\\TH:i' }}"><br>
+            <label>Final</label>
+            <input class="form-control" type="datetime-local" name="hora_final" id="edit_final"><br>
 
-                                        <label>Final</label>
-                                        <input class="form-control" type="datetime-local" name="hora_final"
-                                               value="{{ r.hora_final|date:'Y-m-d\\TH:i' }}"><br>
+            <label>Reales (Bonches)</label>
+            <input class="form-control" type="number" name="bonches" id="edit_bonches"><br>
 
-                                        <!-- (Opcional) deja estos solo lectura si quieres -->
-                                        <label>Horas</label>
-                                        <input class="form-control" type="text" name="horas_trabajadas" value="{{ r.horas_trabajadas }}" readonly><br>
+            <label>Fecha de Entrada</label>
+            <input class="form-control" type="datetime-local" name="fecha_entrada" id="edit_fecha" required><br>
 
-                                        <label>Base</label>
-                                        <input class="form-control" type="text" name="ramos_base" value="{{ r.ramos_base }}" readonly><br>
+            <div class="d-flex justify-content-end">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                <i class="fa fa-times me-1"></i> Cancelar
+              </button>
+              <button type="submit" class="btn btn-success ms-2">
+                <i class="fa fa-save me-1"></i> Guardar Cambios
+              </button>
+            </div>
 
-                                        <label>Esperados</label>
-                                        <input class="form-control" type="text" name="ramos_esperados" value="{{ r.ramos_esperados }}" readonly><br>
+          </form>
+        </div>
 
-                                        <label>Reales (Bonches)</label>
-                                        <input class="form-control" type="number" name="bonches" value="{{ r.bonches }}"><br>
+      </div>
+    </div>
+  </div>
 
-                                        <label>Extras</label>
-                                        <input class="form-control" type="text" name="ramos_extras" value="{{ r.ramos_extras }}" readonly><br>
-
-                                        <label>Ext/Hora</label>
-                                        <input class="form-control" type="text" name="extras_por_hora" value="{{ r.extras_por_hora }}" readonly><br>
-
-                                        <label>Fecha de Entrada</label>
-                                        <input class="form-control" type="datetime-local" name="fecha_entrada"
-                                               value="{{ r.fecha_entrada|date:'Y-m-d\\TH:i' }}" required><br>
-
-                                        <div class="d-flex justify-content-end">
-                                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                                                <i class="fa fa-times me-1"></i> Cancelar
-                                            </button>
-                                            <button type="submit" class="btn btn-success ms-2">
-                                                <i class="fa fa-save me-1"></i> Guardar Cambios
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 </main>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
-// =======================
-// SWEETALERT PARA ELIMINACIÓN
-// =======================
-$(document).on('click', '.btn-eliminar', function(e){
+  // =======================
+  // SWEETALERT ELIMINAR
+  // =======================
+  $(document).on('click', '.btn-eliminar', function(e){
     e.preventDefault();
 
     const url = $(this).attr('href');
     const nombre = $(this).data('nombre') || 'este rendimiento';
-    const id = $(this).data('id') || '';
 
     Swal.fire({
-        title: "¿Eliminar rendimiento?",
-        html: `Vas a eliminar el registro de <b>${nombre}</b><br><span style="color:#FFD700;">Esta acción no se puede deshacer.</span>`,
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Sí, eliminar",
-        cancelButtonText: "Cancelar",
-        background: "#000000",
-        color: "#ffffff",
-        confirmButtonColor: "#FFD700",
-        cancelButtonColor: "#6c757d",
-        reverseButtons: true,
-        customClass: {
-            popup: 'swal2-dark-popup',
-            title: 'swal2-dark-title',
-            htmlContainer: 'swal2-dark-html',
-            confirmButton: 'swal2-dark-confirm',
-            cancelButton: 'swal2-dark-cancel'
-        }
+      title: "¿Eliminar rendimiento?",
+      html: `Vas a eliminar el registro de <b>${nombre}</b><br><span style="color:#FFD700;">Esta acción no se puede deshacer.</span>`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      background: "#000000",
+      color: "#ffffff",
+      confirmButtonColor: "#FFD700",
+      cancelButtonColor: "#6c757d",
+      reverseButtons: true
     }).then((result) => {
-        if (result.isConfirmed) {
-            // Mostrar loading mientras se elimina
-            Swal.fire({
-                title: "Eliminando...",
-                text: "Por favor espera",
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            // Redirigir a la URL de eliminación
-            window.location.href = url;
-        }
-    });
-});
-
-// =======================
-// HELPERS
-// =======================
-
-// "YYYY-MM-DD"
-function toDateKey(value) {
-  if (!value) return "";
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return String(value).slice(0, 10);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function formatearFechaLarga(iso) {
-  if (!iso) return "-";
-  const fecha = new Date(iso);
-  const opciones = { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" };
-  return fecha.toLocaleString("es-EC", opciones).replace(" 0", " ").replace(",", "");
-}
-
-function accionesHTML(id, mesa, fecha) {
-  // Formatear fecha para mostrar en el SweetAlert
-  const fechaFormateada = new Date(fecha).toLocaleString('es-EC', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-  
-  return `
-    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEditar${id}">
-      <i class="fa fa-pen"></i>
-    </button>
-    <a href="/rendimiento/eliminar/${id}/" 
-       class="btn btn-outline-danger btn-eliminar"
-       data-id="${id}"
-       data-nombre="Mesa ${mesa} - ${fechaFormateada}">
-      <i class="fa fa-trash"></i>
-    </a>
-  `;
-}
-
-function soloHora(value) {
-  if (!value) return "-";
-  if (typeof value === "string" && value.includes(":") && !value.includes("T")) return value.slice(0, 5);
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return String(value).slice(0, 5);
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${hh}:${mm}`;
-}
-
-let table;
-
-$(document).ready(function() {
-
-  table = $('#table_rendimiento').DataTable({
-    order: [],
-    ordering: false,
-    responsive: true,
-    dom: 'lBfrtip',
-    buttons: [
-      { extend: 'copy',  text: '<i class="fa fa-copy"></i> Copiar' },
-      { extend: 'csv',   text: '<i class="fa fa-file-csv"></i> CSV' },
-      { extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel' },
-      { extend: 'pdf',   text: '<i class="fa fa-file-pdf"></i> PDF' },
-      { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir' }
-    ],
-    columnDefs: [{ targets: 0, visible: false }],
-    language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' }
-  });
-
-  // =======================
-  // WEBSOCKET
-  // =======================
-  const wsUrl =
-    (location.protocol === "https:" ? "wss" : "ws") +
-    "://" + window.location.host + "/ws/rendimientos/";
-
-  const ws = new WebSocket(wsUrl);
-  ws.onopen = () => console.log("✅ WS Rendimientos conectado:", wsUrl);
-
-  ws.onmessage = function(e) {
-    const payload = JSON.parse(e.data);
-    const data = payload.data ? payload.data : payload;
-
-    const incomingMesa = parseInt(data.numero_mesa);
-    const incomingKey  = toDateKey(data.fecha_entrada);
-
-    let filaExistente = null;
-
-    table.rows().every(function() {
-      const row = this.data();
-      const rowKey  = String(row[0] || "");
-      const rowMesa = parseInt(row[2]);
-      if (rowMesa === incomingMesa && rowKey === incomingKey) {
-        filaExistente = this;
-        return false;
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: "Eliminando...",
+          text: "Por favor espera",
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+        window.location.href = url;
       }
     });
+  });
 
+  // =======================
+  // HELPERS
+  // =======================
+  function toDateKey(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return String(value).slice(0, 10);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function toDateTimeLocal(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${y}-${m}-${day}T${hh}:${mm}`;
+  }
+
+  function formatearFechaLarga(iso) {
+    if (!iso) return "-";
+    const fecha = new Date(iso);
+    const opciones = { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" };
+    return fecha.toLocaleString("es-EC", opciones).replace(" 0", " ").replace(",", "");
+  }
+
+  function soloHora(value) {
+    if (!value) return "-";
+    if (typeof value === "string" && value.includes(":") && !value.includes("T")) return value.slice(0, 5);
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return String(value).slice(0, 5);
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+
+  function accionesHTML(data) {
+    const id = data.id;
+    const mesa = data.numero_mesa;
+    const fechaISO = data.fecha_entrada;
     const rendimientoBase =
       (data.rendimiento !== null && data.rendimiento !== undefined && data.rendimiento !== "")
         ? data.rendimiento
         : 20;
 
-    // ✅ ORDEN DE COLUMNAS IDENTICO AL THEAD
-    const nuevaFila = [
-      incomingKey,                                 // 0 (oculta)
-      data.id,                                     // 1 ID
-      data.numero_mesa,                            // 2 Mesa
-      formatearFechaLarga(data.fecha_entrada),     // 3 Fecha
-      rendimientoBase,                             // 4 Rendimiento
-      soloHora(data.hora_inicio),                  // 5 Inicio
-      soloHora(data.hora_final),                   // 6 Final
-      (data.horas_trabajadas ?? "-"),              // 7 Horas
-      (data.ramos_base ?? "-"),                    // 8 Base
-      (data.ramos_esperados ?? "-"),               // 9 Esperados
-      (data.bonches ?? 0),                         // 10 Reales
-      (data.ramos_extras ?? "-"),                  // 11 Extras
-      (data.extras_por_hora ?? "-"),               // 12 Ext/Hora
-      accionesHTML(data.id, data.numero_mesa, data.fecha_entrada)  // 13 Acciones con SweetAlert
-    ];
+    return `
+      <button
+        type="button"
+        class="btn btn-outline-warning btn-editar"
+        data-bs-toggle="modal"
+        data-bs-target="#modalEditarGlobal"
+        data-id="${id}"
+        data-mesa="${mesa}"
+        data-fecha="${toDateTimeLocal(fechaISO)}"
+        data-inicio="${toDateTimeLocal(data.hora_inicio)}"
+        data-final="${toDateTimeLocal(data.hora_final)}"
+        data-bonches="${data.bonches ?? 0}"
+        data-rendimiento="${rendimientoBase}">
+        <i class="fa fa-pen"></i>
+      </button>
 
-    if (filaExistente) filaExistente.data(nuevaFila).draw(false);
-    else table.row.add(nuevaFila).draw(false);
-    
-    // Re-aplicar el evento click a los nuevos botones de eliminar
-    $(document).off('click', '.btn-eliminar').on('click', '.btn-eliminar', function(e){
-        e.preventDefault();
+      <a href="/eliminar_rendimiento/${id}"
+         class="btn btn-outline-danger btn-eliminar"
+         data-id="${id}"
+         data-nombre="Mesa ${mesa} - ${new Date(fechaISO).toLocaleString('es-EC', {day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}">
+        <i class="fa fa-trash"></i>
+      </a>
+    `;
+  }
 
-        const url = $(this).attr('href');
-        const nombre = $(this).data('nombre') || 'este rendimiento';
-        const id = $(this).data('id') || '';
+  let table;
 
-        Swal.fire({
-            title: "¿Eliminar rendimiento?",
-            html: `Vas a eliminar el registro de <b>${nombre}</b><br><span style="color:#FFD700;">Esta acción no se puede deshacer.</span>`,
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Sí, eliminar",
-            cancelButtonText: "Cancelar",
-            background: "#000000",
-            color: "#ffffff",
-            confirmButtonColor: "#FFD700",
-            cancelButtonColor: "#6c757d",
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                Swal.fire({
-                    title: "Eliminando...",
-                    text: "Por favor espera",
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-                
-                window.location.href = url;
-            }
+  $(document).ready(function() {
+
+    // =======================
+    // DATATABLE
+    // =======================
+    table = $('#table_rendimiento').DataTable({
+      order: [],
+      ordering: false,
+      responsive: true,
+      dom: 'lBfrtip',
+      buttons: [
+        { extend: 'copy',  text: '<i class="fa fa-copy"></i> Copiar' },
+        { extend: 'csv',   text: '<i class="fa fa-file-csv"></i> CSV' },
+        { extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel' },
+        { extend: 'pdf',   text: '<i class="fa fa-file-pdf"></i> PDF' },
+        { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir' }
+      ],
+      columnDefs: [{ targets: 0, visible: false }],
+      language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' }
+    });
+
+    // =======================
+    // ✅ LLENAR MODAL GLOBAL AL EDITAR
+    // =======================
+    $(document).on("click", ".btn-editar", function () {
+      const btn = $(this);
+
+      $("#edit_id").val(btn.data("id"));
+      $("#edit_mesa").val(btn.data("mesa"));
+      $("#edit_rendimiento").val(btn.data("rendimiento") ?? 20);
+      $("#edit_inicio").val(btn.data("inicio") || "");
+      $("#edit_final").val(btn.data("final") || "");
+      $("#edit_bonches").val(btn.data("bonches") ?? 0);
+      $("#edit_fecha").val(btn.data("fecha") || "");
+    });
+
+    // =======================
+    // WEBSOCKET
+    // =======================
+    const wsUrl =
+      (location.protocol === "https:" ? "wss" : "ws") +
+      "://" + window.location.host + "/ws/rendimientos/";
+
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => console.log("✅ WS Rendimientos conectado:", wsUrl);
+
+    ws.onmessage = function(e) {
+      const payload = JSON.parse(e.data);
+      const data = payload.data ? payload.data : payload;
+
+      const incomingMesa = String(data.numero_mesa);
+      const incomingKey  = toDateKey(data.fecha_entrada);
+
+      let filaExistente = null;
+
+      table.rows().every(function() {
+        const row = this.data();
+        const rowKey  = String(row[0] || "");
+        const rowMesa = String(row[2] || "");
+        if (rowMesa === incomingMesa && rowKey === incomingKey) {
+          filaExistente = this;
+          return false;
+        }
+      });
+
+      const rendimientoBase =
+        (data.rendimiento !== null && data.rendimiento !== undefined && data.rendimiento !== "")
+          ? data.rendimiento
+          : 20;
+
+      const nuevaFila = [
+        incomingKey,                                 // 0 (oculta)
+        data.id,                                     // 1 ID
+        data.numero_mesa,                            // 2 Mesa
+        formatearFechaLarga(data.fecha_entrada),     // 3 Fecha
+        rendimientoBase,                             // 4 Rendimiento
+        soloHora(data.hora_inicio),                  // 5 Inicio
+        soloHora(data.hora_final),                   // 6 Final
+        (data.horas_trabajadas ?? "-"),              // 7 Horas
+        (data.ramos_base ?? "-"),                    // 8 Base (oculta)
+        (data.ramos_esperados ?? "-"),               // 9 Ramos Base
+        (data.bonches ?? 0),                         // 10 Ramos realizados
+        (data.ramos_extras ?? "-"),                  // 11 Extras
+        (data.extras_por_hora ?? "-"),               // 12 Ext/Hora
+        accionesHTML(data)                           // 13 Acciones (EDITAR FUNCIONA)
+      ];
+
+      if (filaExistente) filaExistente.data(nuevaFila).draw(false);
+      else table.row.add(nuevaFila).draw(false);
+    };
+
+    // =======================
+    // FILTROS (GET correcto)
+    // =======================
+    document.getElementById("btnAplicarFiltros").addEventListener("click", function () {
+      let ordenar = document.getElementById("ordenarPor").value;
+      let reciente = document.getElementById("ordenReciente").value;
+      let fecha = document.getElementById("fechaExacta").value;
+      let desde = document.getElementById("fechaDesde").value;
+      let hasta = document.getElementById("fechaHasta").value;
+
+      let url = "/api/rendimientos/?";
+      if (ordenar) url += `ordenar=${encodeURIComponent(ordenar)}&`;
+      if (reciente) url += `reciente=${encodeURIComponent(reciente)}&`;
+      if (fecha) url += `fecha=${encodeURIComponent(fecha)}&`;
+      if (desde && hasta) url += `desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}&`;
+
+      fetch(url)
+        .then(r => r.json())
+        .then(data => {
+          table.clear();
+          data.forEach(item => {
+            const key = toDateKey(item.fecha_entrada);
+            const rendBase =
+              (item.rendimiento !== null && item.rendimiento !== undefined && item.rendimiento !== "")
+                ? item.rendimiento
+                : 20;
+
+            table.row.add([
+              key,
+              item.id,
+              item.numero_mesa,
+              formatearFechaLarga(item.fecha_entrada),
+              rendBase,
+              soloHora(item.hora_inicio),
+              soloHora(item.hora_final),
+              (item.horas_trabajadas ?? "-"),
+              (item.ramos_base ?? "-"),
+              (item.ramos_esperados ?? "-"),
+              (item.bonches ?? 0),
+              (item.ramos_extras ?? "-"),
+              (item.extras_por_hora ?? "-"),
+              accionesHTML(item)
+            ]);
+          });
+          table.draw(false);
         });
     });
-  };
 
-});
+    document.getElementById("btnLimpiarFiltros").addEventListener("click", function () {
+      document.getElementById("ordenarPor").value = "";
+      document.getElementById("ordenReciente").value = "";
+      document.getElementById("fechaExacta").value = "";
+      document.getElementById("fechaDesde").value = "";
+      document.getElementById("fechaHasta").value = "";
 
+      fetch("/api/rendimientos/")
+        .then(r => r.json())
+        .then(data => {
+          table.clear();
+          data.forEach(item => {
+            const key = toDateKey(item.fecha_entrada);
+            const rendBase =
+              (item.rendimiento !== null && item.rendimiento !== undefined && item.rendimiento !== "")
+                ? item.rendimiento
+                : 20;
 
-// =======================
-// FILTROS
-// =======================
-document.getElementById("btnAplicarFiltros").addEventListener("click", function () {
-  let ordenar = document.getElementById("ordenarPor").value;
-  let reciente = document.getElementById("ordenReciente").value;
-  let fecha = document.getElementById("fechaExacta").value;
-  let desde = document.getElementById("fechaDesde").value;
-  let hasta = document.getElementById("fechaHasta").value;
-
-  let url = "/api/rendimientos/?";
-  if (ordenar) url += `ordenar=${ordenar}&`;
-  if (reciente) url += `reciente=${reciente}&`;
-  if (fecha) url += `fecha=${fecha}&`;
-  if (desde && hasta) url += `desde=${desde}&hasta=${hasta}&`;
-
-  fetch("/api/rendimientos/", {
-    method: "POST",
-    credentials: "same-origin", // ✅ ESTO ES LO QUE TE FALTA
-    headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(r => r.json())
-    .then(data => {
-      table.clear();
-      data.forEach(item => {
-        const key = toDateKey(item.fecha_entrada);
-        const rendBase =
-          (item.rendimiento !== null && item.rendimiento !== undefined && item.rendimiento !== "")
-            ? item.rendimiento
-            : 20;
-
-        table.row.add([
-          key,
-          item.id,
-          item.numero_mesa,
-          formatearFechaLarga(item.fecha_entrada),
-          rendBase,
-          soloHora(item.hora_inicio),
-          soloHora(item.hora_final),
-          (item.horas_trabajadas ?? "-"),
-          (item.ramos_base ?? "-"),
-          (item.ramos_esperados ?? "-"),
-          (item.bonches ?? 0),
-          (item.ramos_extras ?? "-"),
-          (item.extras_por_hora ?? "-"),
-          accionesHTML(item.id, item.numero_mesa, item.fecha_entrada)
-        ]);
-      });
-      table.draw(false);
+            table.row.add([
+              key,
+              item.id,
+              item.numero_mesa,
+              formatearFechaLarga(item.fecha_entrada),
+              rendBase,
+              soloHora(item.hora_inicio),
+              soloHora(item.hora_final),
+              (item.horas_trabajadas ?? "-"),
+              (item.ramos_base ?? "-"),
+              (item.ramos_esperados ?? "-"),
+              (item.bonches ?? 0),
+              (item.ramos_extras ?? "-"),
+              (item.extras_por_hora ?? "-"),
+              accionesHTML(item)
+            ]);
+          });
+          table.draw(false);
+        });
     });
-});
 
-document.getElementById("btnLimpiarFiltros").addEventListener("click", function () {
-  document.getElementById("ordenarPor").value = "";
-  document.getElementById("ordenReciente").value = "";
-  document.getElementById("fechaExacta").value = "";
-  document.getElementById("fechaDesde").value = "";
-  document.getElementById("fechaHasta").value = "";
-
-  fetch("/api/rendimientos/")
-    .then(r => r.json())
-    .then(data => {
-      table.clear();
-      data.forEach(item => {
-        const key = toDateKey(item.fecha_entrada);
-        const rendBase =
-          (item.rendimiento !== null && item.rendimiento !== undefined && item.rendimiento !== "")
-            ? item.rendimiento
-            : 20;
-
-        table.row.add([
-          key,
-          item.id,
-          item.numero_mesa,
-          formatearFechaLarga(item.fecha_entrada),
-          rendBase,
-          soloHora(item.hora_inicio),
-          soloHora(item.hora_final),
-          (item.horas_trabajadas ?? "-"),
-          (item.ramos_base ?? "-"),
-          (item.ramos_esperados ?? "-"),
-          (item.bonches ?? 0),
-          (item.ramos_extras ?? "-"),
-          (item.extras_por_hora ?? "-"),
-          accionesHTML(item.id, item.numero_mesa, item.fecha_entrada)
-        ]);
-      });
-      table.draw(false);
-    });
-});
+  });
 </script>
 
 <style>
-/* Estilos adicionales para SweetAlert */
-.swal2-dark-popup {
+  .swal2-dark-popup {
     background: #000000 !important;
     border: 1px solid #FFD700 !important;
     border-radius: 15px !important;
-}
-
-.swal2-dark-title {
-    color: #FFD700 !important;
-    font-weight: 600 !important;
-}
-
-.swal2-dark-html {
-    color: #ffffff !important;
-}
-
-.swal2-dark-confirm {
+  }
+  .swal2-dark-title { color: #FFD700 !important; font-weight: 600 !important; }
+  .swal2-dark-html { color: #ffffff !important; }
+  .swal2-dark-confirm {
     background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%) !important;
     border: none !important;
     color: #000000 !important;
     font-weight: 600 !important;
     border-radius: 10px !important;
     padding: 10px 25px !important;
-}
-
-.swal2-dark-cancel {
+  }
+  .swal2-dark-cancel {
     background: #6c757d !important;
     border: none !important;
     color: #ffffff !important;
     font-weight: 600 !important;
     border-radius: 10px !important;
     padding: 10px 25px !important;
-}
-
-/* Estilos para el botón de eliminar */
-.btn-eliminar {
-    transition: all 0.3s ease !important;
-}
-
-.btn-eliminar:hover {
+  }
+  .btn-eliminar { transition: all 0.3s ease !important; }
+  .btn-eliminar:hover {
     transform: translateY(-2px) !important;
     box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3) !important;
-}
-
-/* Estilo para el botón de editar */
-.btn-outline-warning {
-    transition: all 0.3s ease !important;
-}
-
-.btn-outline-warning:hover {
+  }
+  .btn-outline-warning { transition: all 0.3s ease !important; }
+  .btn-outline-warning:hover {
     transform: translateY(-2px) !important;
     box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3) !important;
-}
+  }
 </style>
 
 <br><br>

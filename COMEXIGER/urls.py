@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 from django.urls import reverse_lazy
+from Aplicaciones.Disponibilidad.views import listar_variedades_api
 
 from Aplicaciones.Usuario.refresh_api import refresh_token_api
 
@@ -45,8 +46,7 @@ urlpatterns = [
     path('api/jornada/actual/', obtener_jornada_actual_api, name='api_jornada_actual'),
     path('api/jornada/historial/', obtener_historial_jornadas_api, name='api_jornada_historial'),
     
-    
-    
+    path('api/variedades/', listar_variedades_api, name='api_variedades'),
 
     path("api/token/refresh/", refresh_token_api, name="api_token_refresh"),
 
