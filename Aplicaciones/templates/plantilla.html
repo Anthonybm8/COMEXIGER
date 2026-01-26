@@ -27,6 +27,18 @@
 
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    // ✅ Formato único global para SweetAlert2 (como tu imagen)
+    window.SwalDark = Swal.mixin({
+      background: "#000000",
+      color: "#ffffff",
+      confirmButtonColor: "#FFD700",
+      cancelButtonColor: "#6c757d",
+      reverseButtons: true
+    });
+  </script>
+
+
 
   <!-- =======================
        DataTables Bootstrap 5 CSS
@@ -114,12 +126,10 @@
 {% if messages %}
   {% for mensaje in messages %}
   <script>
-    Swal.fire({
+    SwalDark.fire({
       title: "{{ mensaje.tags|capfirst }}",
       text: "{{ mensaje }}",
-      icon: "{{ mensaje.tags }}",
-      background: "#1c1c1c",
-      color: "#ffffff"
+      icon: "{{ mensaje.tags }}"
     });
   </script>
   {% endfor %}

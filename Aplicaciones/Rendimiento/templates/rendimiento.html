@@ -2,10 +2,6 @@
 {% load static %}
 {% block body %}
 
-<!-- Incluir SweetAlert2 -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <br>
 <main class="container py-4"><br><br>
   <h1 class="text-center">Listado de Rendimiento</h1>
@@ -198,21 +194,16 @@
     const url = $(this).attr('href');
     const nombre = $(this).data('nombre') || 'este rendimiento';
 
-    Swal.fire({
+    SwalDark.fire({
       title: "¿Eliminar rendimiento?",
       html: `Vas a eliminar el registro de <b>${nombre}</b><br><span style="color:#FFD700;">Esta acción no se puede deshacer.</span>`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
-      background: "#000000",
-      color: "#ffffff",
-      confirmButtonColor: "#FFD700",
-      cancelButtonColor: "#6c757d",
-      reverseButtons: true
+      cancelButtonText: "Cancelar"
     }).then((result) => {
       if (result.isConfirmed) {
-        Swal.fire({
+        SwalDark.fire({
           title: "Eliminando...",
           text: "Por favor espera",
           allowOutsideClick: false,
@@ -221,6 +212,7 @@
         window.location.href = url;
       }
     });
+
   });
 
   // =======================
@@ -484,29 +476,6 @@
 </script>
 
 <style>
-  .swal2-dark-popup {
-    background: #000000 !important;
-    border: 1px solid #FFD700 !important;
-    border-radius: 15px !important;
-  }
-  .swal2-dark-title { color: #FFD700 !important; font-weight: 600 !important; }
-  .swal2-dark-html { color: #ffffff !important; }
-  .swal2-dark-confirm {
-    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%) !important;
-    border: none !important;
-    color: #000000 !important;
-    font-weight: 600 !important;
-    border-radius: 10px !important;
-    padding: 10px 25px !important;
-  }
-  .swal2-dark-cancel {
-    background: #6c757d !important;
-    border: none !important;
-    color: #ffffff !important;
-    font-weight: 600 !important;
-    border-radius: 10px !important;
-    padding: 10px 25px !important;
-  }
   .btn-eliminar { transition: all 0.3s ease !important; }
   .btn-eliminar:hover {
     transform: translateY(-2px) !important;
