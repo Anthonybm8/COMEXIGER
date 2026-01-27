@@ -1,69 +1,290 @@
 {% extends 'plantilla.html' %}
 {% load static %}
+
+{% block head %}
+{{ block.super }}
+<style>
+  /* ====== TUS COLORES ====== */
+  body{
+    background: #ECF0F5 !important;
+  }
+  :root{
+    --sidebar: #222D32;
+    --bg: #ECF0F5;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --text: #111827;
+    --muted: #6b7280;
+    --accent: #3c8dbc; /* tono tipo AdminLTE (combina con #222D32) */
+    --accent2: #2e6f91;
+    --danger: #e74c3c;
+    --success: #27ae60;
+    --warning: #f39c12;
+  }
+
+  /* ====== TARJETA PRINCIPAL ====== */
+  .page-title{
+    color: var(--text);
+    font-weight: 800;
+  }
+  .page-subtitle{
+    color: var(--muted);
+  }
+
+  .user-card{
+    border: 0;
+    border-radius: 16px;
+    background: var(--card);
+    box-shadow: 0 10px 26px rgba(0,0,0,.08);
+    overflow: hidden;
+  }
+
+  .user-card .card-header{
+    background: linear-gradient(135deg, var(--sidebar) 0%, #1b2428 100%);
+    color: #fff;
+    border: 0;
+    padding: 18px 22px;
+  }
+
+  .user-card .card-body{
+    padding: 22px;
+  }
+
+  .soft-hr{
+    border-top: 2px solid rgba(34,45,50,.12);
+    opacity: 1;
+  }
+
+  /* ====== INPUTS BONITOS ====== */
+  .form-label{
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .form-control, .form-select{
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    padding: 12px 14px;
+    transition: all .2s ease;
+    background: #fff;
+    color: var(--text);
+  }
+
+  .form-control:focus, .form-select:focus{
+    border-color: rgba(60,141,188,.55);
+    box-shadow: 0 0 0 .25rem rgba(60,141,188,.15);
+  }
+
+  .input-group-text{
+    border-radius: 12px 0 0 12px;
+    border: 2px solid var(--border);
+    background: #f8fafc;
+    color: var(--sidebar);
+    font-weight: 700;
+  }
+  .input-group .form-control,
+  .input-group .form-select{
+    border-left: 0;
+    border-radius: 0 12px 12px 0;
+  }
+
+  .help-text{
+    color: var(--muted) !important;
+    font-size: .85rem;
+  }
+
+  /* ====== VALIDACIÓN ====== */
+  .invalid-feedback{
+    display: block;
+    margin-top: 6px;
+    font-size: .875rem;
+  }
+  .is-invalid{
+    border-color: var(--danger) !important;
+  }
+
+  /* ====== BOTONES ====== */
+  .btn{
+    border-radius: 12px;
+    font-weight: 800;
+    border-width: 2px;
+  }
+
+  .btn-primary{
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border: none;
+  }
+  .btn-primary:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(60,141,188,.18);
+  }
+
+  .btn-success{
+    background: linear-gradient(135deg, var(--success) 0%, #2ecc71 100%);
+    border: none;
+  }
+  .btn-success:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(39,174,96,.18);
+  }
+
+  .btn-outline-danger{
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+  .btn-outline-danger:hover{
+    background: linear-gradient(135deg, var(--danger) 0%, #c0392b 100%);
+    border-color: transparent;
+    color: #fff;
+  }
+
+  .btn-outline-info{
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-outline-info:hover{
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border-color: transparent;
+    color: #fff;
+  }
+
+  /* ====== MODAL CLARO Y LEGIBLE ====== */
+  .modal-content{
+    border-radius: 16px;
+    border: 0;
+    box-shadow: 0 18px 50px rgba(0,0,0,.18);
+    background: #fff;
+  }
+  .modal-header{
+    background: linear-gradient(135deg, var(--sidebar) 0%, #1b2428 100%);
+    color: #fff;
+    border: 0;
+    padding: 16px 20px;
+  }
+  .modal-body{
+    padding: 20px;
+  }
+  .modal-footer{
+    border-top: 1px solid rgba(34,45,50,.10);
+    padding: 16px 20px;
+    background: #fafafa;
+    border-radius: 0 0 16px 16px;
+  }
+</style>
+{% endblock %}
+
 {% block body %}
 
 <main class="container py-4">
-  <div class="row">
-    <div class="col-md-3"></div>
 
-    <div class="col-md-6 bg-black p-4 rounded-3 text-white">
-      <h1 class="m-0 text-center flex-grow-1">Nuevo Registro de Usuario</h1>
-
-      <div class="d-flex justify-content-start mb-3">
-        <button type="button" class="btn btn-outline-info"
-                data-bs-toggle="modal"
-                data-bs-target="#modalMesa">
-          <i class="fa fa-plus"></i> Agregar nueva mesa
-        </button>
-      </div>
-
-      <form action="{% url 'guardar_usuario' %}" method="post" id="form_usuario" autocomplete="off">
-        {% csrf_token %}
-
-        <label for="nombres">Nombres</label>
-        <input class="form-control" type="text" name="nombres" id="nombres" required>
-        <br>
-
-        <label for="apellidos">Apellidos</label>
-        <input class="form-control" type="text" name="apellidos" id="apellidos" required>
-        <br>
-
-        <label for="mesa">Mesa</label><br>
-        <select class="form-select" name="mesa" id="mesa" required>
-          <option value="">-- Seleccionar mesa --</option>
-          {% for m in mesas %}
-            <option value="{{ m.nombre }}">{{ m.nombre }}</option>
-          {% endfor %}
-        </select>
-        <br>
-
-        <label for="cargo">Cargo</label>
-        <input class="form-control" type="text" name="cargo" id="cargo" required>
-        <br>
-
-        <label for="username">Usuario</label>
-        <input class="form-control" type="text" name="username" id="username" required>
-        <small class="text-muted d-block mt-1">
-          Usa letras/números y . _ - (sin espacios)
-        </small>
-        <br>
-
-        <label for="password">Contraseña</label>
-        <input class="form-control" type="password" name="password" id="password" required>
-        <br>
-
-        <label for="password2">Confirmar contraseña</label>
-        <input class="form-control" type="password" name="password2" id="password2" required>
-        <br>
-
-        <div class="d-flex justify-content-between mt-3">
-          <button class="btn btn-success" type="submit">Guardar</button>
-          <a class="btn btn-outline-danger" href="{% url 'usuariore' %}">Cancelar</a>
-        </div>
-      </form>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
+    <div>
+      <h2 class="page-title mb-1">👤 Nuevo Registro de Usuario</h2>
+      <div class="page-subtitle">Completa los datos para crear el usuario</div>
     </div>
 
-    <div class="col-md-3"></div>
+    <button type="button" class="btn btn-outline-info mt-3 mt-md-0"
+            data-bs-toggle="modal"
+            data-bs-target="#modalMesa">
+      <i class="fa fa-plus me-2"></i>Agregar nueva mesa
+    </button>
+  </div>
+
+  <div class="card user-card">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div class="fw-bold">
+        <i class="fa fa-user-plus me-2"></i>Formulario de registro
+      </div>
+      <span class="badge bg-warning text-dark px-3 py-2" style="border-radius: 999px;">
+        <i class="fa fa-info-circle me-1"></i>Campos obligatorios
+      </span>
+    </div>
+
+    <div class="card-body">
+      <hr class="soft-hr mb-4">
+
+      <!-- ✅ novalidate: evita "Completa este campo" del navegador -->
+      <form action="{% url 'guardar_usuario' %}" method="post" id="form_usuario" autocomplete="off" novalidate>
+        {% csrf_token %}
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="nombres" class="form-label">Nombres</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-user"></i></span>
+              <input class="form-control" type="text" name="nombres" id="nombres" placeholder="Ej: Karen">
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="apellidos" class="form-label">Apellidos</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-user"></i></span>
+              <input class="form-control" type="text" name="apellidos" id="apellidos" placeholder="Ej: Barcia">
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="mesa" class="form-label">Mesa</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-chair"></i></span>
+              <select class="form-select" name="mesa" id="mesa">
+                <option value="">-- Seleccionar mesa --</option>
+                {% for m in mesas %}
+                  <option value="{{ m.nombre }}">{{ m.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="cargo" class="form-label">Cargo</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-briefcase"></i></span>
+              <input class="form-control" type="text" name="cargo" id="cargo" placeholder="Ej: Administrador">
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <label for="username" class="form-label">Usuario</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-id-badge"></i></span>
+              <input class="form-control" type="text" name="username" id="username" placeholder="Ej: karen.barcia">
+            </div>
+            <small class="help-text d-block mt-2">
+              Usa letras/números y <b>.</b> <b>_</b> <b>-</b> (sin espacios)
+            </small>
+          </div>
+
+          <div class="col-md-6">
+            <label for="password" class="form-label">Contraseña</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-key"></i></span>
+              <input class="form-control" type="password" name="password" id="password" placeholder="••••••••">
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="password2" class="form-label">Confirmar contraseña</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-key"></i></span>
+              <input class="form-control" type="password" name="password2" id="password2" placeholder="••••••••">
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mt-4">
+          <button class="btn btn-success px-4 py-2" type="submit">
+            <i class="fa fa-save me-2"></i>Guardar
+          </button>
+          <a class="btn btn-outline-danger px-4 py-2" href="{% url 'usuariore' %}">
+            <i class="fa fa-times me-2"></i>Cancelar
+          </a>
+        </div>
+      </form>
+
+    </div>
   </div>
 </main>
 
@@ -72,13 +293,13 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
 
-      <div class="modal-header bg-info text-white">
-        <h5 class="modal-title">Agregar nueva mesa</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa fa-plus me-2"></i>Agregar nueva mesa</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
 
       <div class="modal-body">
-        <form action="{% url 'guardar_mesa' %}" method="post" id="form_mesa">
+        <form action="{% url 'guardar_mesa' %}" method="post" id="form_mesa" novalidate>
           {% csrf_token %}
 
           <label class="form-label" for="nombre_mesa">Nombre de mesa (solo número)</label>
@@ -88,18 +309,21 @@
             name="nombre"
             id="nombre_mesa"
             placeholder="Ej: 1"
-            required
             min="1"
             step="1"
             inputmode="numeric"
           >
+          
+          <small class="help-text d-block mt-2">
+            Ejemplo: 1, 2, 3, 10...
+          </small>
 
-          <div class="d-flex justify-content-end mt-3">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <div class="modal-footer px-0 pb-0 mt-3">
+            <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">
               Cancelar
             </button>
-            <button type="submit" class="btn btn-info ms-2">
-              <i class="fa fa-save"></i> Guardar
+            <button type="submit" class="btn btn-primary ms-2">
+              <i class="fa fa-save me-2"></i>Guardar
             </button>
           </div>
         </form>
@@ -109,77 +333,57 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block extra_scripts %}
+{{ block.super }}
+
+<!-- ✅ jQuery + Validate (si ya los tienes en plantilla, quita estas 2 líneas para evitar duplicados) -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+
 <script>
 $(function () {
 
-  // ==========================
-  // MÉTODOS PERSONALIZADOS
-  // ==========================
-
-  // Solo letras y espacios (para nombres y apellidos)
+  // ====== MÉTODOS ======
   $.validator.addMethod("lettersOnly", function(value, element) {
     return this.optional(element) || /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(value);
   }, "Solo letras, por favor.");
 
-  // Username permitido: letras/números/._- sin espacios
   $.validator.addMethod("usernameValid", function(value, element) {
     return this.optional(element) || /^[a-zA-Z0-9._-]+$/.test(value);
   }, "Usa solo letras, números y . _ - (sin espacios).");
 
-  // Solo números enteros (para el modal mesa)
   $.validator.addMethod("numbersOnly", function(value, element) {
     return this.optional(element) || /^\d+$/.test(value);
   }, "Solo se permiten números.");
 
-  // ==========================
-  // BLOQUEO EN TIEMPO REAL (MODAL)
-  // ==========================
+  // Bloqueo en tiempo real modal
   $('#nombre_mesa').on('input', function () {
-    // elimina cualquier cosa que no sea dígito
     this.value = this.value.replace(/[^0-9]/g, '');
   });
 
-  // ==========================
-  // VALIDACIÓN FORM USUARIO
-  // ==========================
+  // Helper: colocar error debajo del input-group
+  function placeBootstrapError(error, element){
+    error.addClass('invalid-feedback');
+    if (element.closest('.input-group').length) {
+      error.insertAfter(element.closest('.input-group'));
+    } else {
+      error.insertAfter(element);
+    }
+  }
+
+  // ====== VALIDACIÓN USUARIO ======
   $('#form_usuario').validate({
     ignore: [],
     rules: {
-      nombres: {
-        required: true,
-        lettersOnly: true,
-        minlength: 3,
-        maxlength: 100
-      },
-      apellidos: {
-        required: true,
-        lettersOnly: true,
-        minlength: 3,
-        maxlength: 100
-      },
-      mesa: {
-        required: true,
-        maxlength: 100
-      },
-      cargo: {
-        required: true,
-        maxlength: 100
-      },
-      username: {
-        required: true,
-        minlength: 3,
-        maxlength: 150,
-        usernameValid: true
-      },
-      password: {
-        required: true,
-        minlength: 6,
-        maxlength: 128
-      },
-      password2: {
-        required: true,
-        equalTo: "#password"
-      }
+      nombres: { required: true, lettersOnly: true, minlength: 3, maxlength: 100 },
+      apellidos: { required: true, lettersOnly: true, minlength: 3, maxlength: 100 },
+      mesa: { required: true },
+      cargo: { required: true, maxlength: 100 },
+      username: { required: true, minlength: 3, maxlength: 150, usernameValid: true },
+      password: { required: true, minlength: 6, maxlength: 128 },
+      password2: { required: true, equalTo: "#password" }
     },
     messages: {
       nombres: {
@@ -194,10 +398,7 @@ $(function () {
         maxlength: "No puede superar 100 caracteres.",
         lettersOnly: "Solo se permiten letras."
       },
-      mesa: {
-        required: "Por favor seleccione la mesa.",
-        maxlength: "No puede superar 100 caracteres."
-      },
+      mesa: { required: "Por favor seleccione la mesa." },
       cargo: {
         required: "Por favor ingrese el cargo.",
         maxlength: "No puede superar 100 caracteres."
@@ -219,30 +420,17 @@ $(function () {
       }
     },
     errorElement: 'div',
-    errorClass: 'error',
-    errorPlacement: function (error, element) {
-      error.insertAfter(element);
-    },
-    highlight: function (element) {
-      $(element).addClass('is-invalid');
-    },
-    unhighlight: function (element) {
-      $(element).removeClass('is-invalid');
-    }
+    errorPlacement: placeBootstrapError,
+    highlight: function (element) { $(element).addClass('is-invalid'); },
+    unhighlight: function (element) { $(element).removeClass('is-invalid'); },
+    submitHandler: function(form) { form.submit(); }
   });
 
-  // ==========================
-  // VALIDACIÓN FORM MODAL MESA
-  // ==========================
+  // ====== VALIDACIÓN MODAL MESA ======
   $('#form_mesa').validate({
     ignore: [],
     rules: {
-      nombre: {
-        required: true,
-        numbersOnly: true,
-        min: 1,
-        maxlength: 10
-      }
+      nombre: { required: true, numbersOnly: true, min: 1, maxlength: 10 }
     },
     messages: {
       nombre: {
@@ -253,19 +441,13 @@ $(function () {
       }
     },
     errorElement: 'div',
-    errorClass: 'error',
-    errorPlacement: function (error, element) {
-      error.insertAfter(element);
-    },
-    highlight: function (element) {
-      $(element).addClass('is-invalid');
-    },
-    unhighlight: function (element) {
-      $(element).removeClass('is-invalid');
-    }
+    errorPlacement: placeBootstrapError,
+    highlight: function (element) { $(element).addClass('is-invalid'); },
+    unhighlight: function (element) { $(element).removeClass('is-invalid'); },
+    submitHandler: function(form) { form.submit(); }
   });
 
-  // (Opcional) limpiar el campo cuando cierres el modal
+  // Limpiar modal al cerrar
   $('#modalMesa').on('hidden.bs.modal', function () {
     $('#nombre_mesa').val('').removeClass('is-invalid');
     $('#form_mesa').validate().resetForm();
@@ -273,5 +455,4 @@ $(function () {
 
 });
 </script>
-
 {% endblock %}
