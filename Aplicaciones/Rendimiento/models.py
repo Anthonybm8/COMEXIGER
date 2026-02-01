@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal, ROUND_FLOOR
 
 def hora_a_decimal_excel(dt):
-    # 20:30 -> 20.30 -> 20.3 (como tu Excel)
+ 
     return float(f"{dt.hour}.{dt.minute:02d}")
 
 
@@ -88,13 +88,12 @@ class Rendimiento(models.Model):
 
 
     def save(self, *args, **kwargs):
-        print("🔵 [MODEL] save() llamado - ID:", self.id)
+        print(" [MODEL] save() llamado - ID:", self.id)
         self.recalcular()
         super().save(*args, **kwargs)
 
 
 
-# 🔥 NUEVO MODELO: JornadaLaboral - Movido a Rendimiento
 class JornadaLaboral(models.Model):
     ESTADOS = [
         ('iniciada', 'Jornada Iniciada'),

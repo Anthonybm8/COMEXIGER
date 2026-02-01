@@ -20,7 +20,6 @@ from Aplicaciones.Usuario.web_decorators import web_login_required
 # ================== VISTAS WEB ==================
 @web_login_required
 def inicio(request):
-    # ✅ Mostrar solo jornadas base (opcional pero recomendado)
     listadoRendimiento = Rendimiento.objects.filter(qr_id="JORNADA").order_by('-fecha_entrada')
     return render(request, 'rendimiento.html', {'rendimiento': listadoRendimiento})
 
@@ -91,7 +90,6 @@ def procesar_edicion_rendimiento(request):
 
             rendimiento.numero_mesa = request.POST["numero_mesa"]
             rendimiento.bonches = int(request.POST.get("bonches", 0))
-            # ✅ SI editas rendimiento desde el modal, guárdalo
             if request.POST.get("rendimiento"):
                 rendimiento.rendimiento = int(request.POST.get("rendimiento"))
 
@@ -208,7 +206,6 @@ def api_rendimiento_list(request):
 
     hoy = timezone.localdate()
 
-    # ✅ 0) Debe existir jornada activa para esa mesa hoy
     jornada_base = (Rendimiento.objects
         .filter(qr_id="JORNADA", numero_mesa=mesa, hora_final__isnull=True)
         .order_by("-hora_inicio", "-fecha_entrada")
@@ -222,18 +219,15 @@ def api_rendimiento_list(request):
             status=status.HTTP_409_CONFLICT
         )
 
-    # 🔒 1) QR no repetido para siempre
     if QRUsado.objects.filter(qr_id=codigo).exists():
         return Response({"error": "Este QR ya fue utilizado"}, status=status.HTTP_409_CONFLICT)
 
     QRUsado.objects.create(qr_id=codigo)
 
-    # ✅ 2) Sumar al registro base
     jornada_base.bonches += 1
     jornada_base.recalcular()
     jornada_base.save()
 
-    # ✅ websocket
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         "rendimientos",
@@ -256,9 +250,9 @@ def api_rendimiento_detail(request, pk):
     if request.method == 'PUT':
         serializer = RendimientoSerializer(rendimiento, data=request.data, partial=True)
         if serializer.is_valid():
-            obj = serializer.save()   # guarda los campos enviados
-            obj.recalcular()          # recalcula con hora_inicio/hora_final
-            obj.save()                # guarda los calculados
+            obj = serializer.save()   
+            obj.recalcular()          
+            obj.save()                
 
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(

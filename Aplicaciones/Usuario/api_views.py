@@ -83,10 +83,7 @@ def login_usuario_api(request):
         if not username or not password:
             return JsonResponse({"success": False, "error": "Usuario y contraseña son requeridos"}, status=400)
 
-        
-        # =====================================================
-        # ✅ USUARIO NORMAL EN TU BD
-        # =====================================================
+
         usuario = Usuario.objects.filter(username__iexact=username).first()
         if not usuario:
             return JsonResponse({"success": False, "error": "Usuario no encontrado"}, status=404)
@@ -94,13 +91,6 @@ def login_usuario_api(request):
         if not check_password(password, usuario.password):
             return JsonResponse({"success": False, "error": "Credenciales incorrectas"}, status=401)
 
-        # =====================================================
-        # ✅ Tokens con tu jwt_utils custom
-        # IMPORTANTE:
-        # Tu auth UsuarioJWTAuthentication (la que hicimos) espera:
-        #   payload["type"] == "access"
-        #   payload["sub"] == usuario_id
-        # =====================================================
         payload_access = {
             "sub": str(usuario.id),
             "type": "access",

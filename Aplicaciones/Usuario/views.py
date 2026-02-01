@@ -21,17 +21,17 @@ def inicio(request):
 
         usuario = Usuario.objects.filter(username__iexact=username).first()
 
-        # ❌ Usuario no existe o contraseña incorrecta
+
         if not usuario or not usuario.check_password(password):
             messages.error(request, "Credenciales incorrectas")
             return render(request, "iniciose.html")
 
-        # ❌ Usuario existe pero NO es ADMIN
+      
         if usuario.cargo.upper() != "ADMIN":
             messages.error(request, "ACCESO DENEGADO.")
             return render(request, "iniciose.html")
 
-        # ✅ Usuario ADMIN → crear sesión WEB
+    
         request.session["web_user_id"] = usuario.id
         request.session["web_username"] = usuario.username
         request.session.set_expiry(60 * 60 * 8)  # 8 horas
@@ -88,7 +88,7 @@ def guardar_usuario(request):
     if request.method == "POST":
         nombres = request.POST["nombres"]
         apellidos = request.POST["apellidos"]
-        mesa = request.POST["mesa"]  # <-- sigue siendo TEXTO
+        mesa = request.POST["mesa"] 
         cargo = request.POST["cargo"]
         username = request.POST["username"]
         password = request.POST["password"]
@@ -100,7 +100,7 @@ def guardar_usuario(request):
             cargo=cargo,
             username=username,
         )
-        u.set_password(password)  # ✅ hashea usando tu método del modelo
+        u.set_password(password)  
         u.save()
 
         messages.success(request, "Usuario guardado exitosamente.")
@@ -122,12 +122,7 @@ def eliminar_usuario(request, id):
 
 @web_login_required
 def procesar_edicion_usuario(request):
-    """
-    ✅ Edita: nombres, apellidos, mesa, cargo, username
-    ✅ Password ES OPCIONAL:
-       - Si viene vacío: no se cambia
-       - Si viene con texto: se actualiza (hasheado con set_password)
-    """
+    
     if request.method == "POST":
         try:
             id = request.POST["id"]

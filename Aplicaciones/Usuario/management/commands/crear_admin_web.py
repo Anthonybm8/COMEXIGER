@@ -9,7 +9,7 @@ class Command(BaseCommand):
         parser.add_argument("--password", required=True)
         parser.add_argument("--nombres", default="Admin")
         parser.add_argument("--apellidos", default="Web")
-        # ✅ ADMIN no tiene mesa
+   
         parser.add_argument("--mesa", default="")
         parser.add_argument("--cargo", default="ADMIN")
 
@@ -18,7 +18,7 @@ class Command(BaseCommand):
         mesa = (opts.get("mesa") or "").strip()
         cargo = (opts.get("cargo") or "ADMIN").strip()
 
-        # ✅ Si es ADMIN, forzamos mesa vacía aunque te pasen algo
+    
         if cargo.upper() == "ADMIN":
             mesa = ""
 
@@ -31,7 +31,7 @@ class Command(BaseCommand):
             u.cargo = cargo
             u.set_password(opts["password"])
             u.save()
-            self.stdout.write(self.style.SUCCESS(f"✅ Admin actualizado: {u.username}"))
+            self.stdout.write(self.style.SUCCESS(f"Admin actualizado: {u.username}"))
             return
 
         u = Usuario(
@@ -43,4 +43,4 @@ class Command(BaseCommand):
         )
         u.set_password(opts["password"])
         u.save()
-        self.stdout.write(self.style.SUCCESS(f"✅ Admin creado: {u.username}"))
+        self.stdout.write(self.style.SUCCESS(f" Admin creado: {u.username}"))

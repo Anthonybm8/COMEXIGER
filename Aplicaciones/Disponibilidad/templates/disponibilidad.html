@@ -77,48 +77,26 @@
                 </div>
 
                 <form id="formEditarCelda" action="{% url 'procesar_edicion_disponibilidad' %}" method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="id" id="edit_id">
+                  {% csrf_token %}
+                  <input type="hidden" name="id" id="edit_id">
 
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="fw-bold">Variedad</label>
-                            <input class="form-control" type="text" name="variedad" id="edit_variedad" required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="fw-bold">Medida</label>
-                            <input class="form-control" type="text" name="medida" id="edit_medida" required>
-                            <small class="text-muted">Ej: OPE, 40 cm, 50 cm…</small>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="fw-bold">Stock</label>
-                            <input class="form-control" type="number" name="stock" id="edit_stock" required min="0">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="fw-bold">Mesa</label>
-                            <input class="form-control" type="number" name="numero_mesa" id="edit_mesa" required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="fw-bold">Fecha Entrada</label>
-                            <input class="form-control" type="datetime-local" name="fecha_entrada" id="edit_fecha_entrada" required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="fw-bold">Fecha Salida</label>
-                            <input class="form-control" type="datetime-local" name="fecha_salida" id="edit_fecha_salida">
-                        </div>
-                    </div>
-
-                    <div class="text-end mt-4">
-                        <button type="submit" class="btn btn-success px-4">
-                            <i class="fa fa-save"></i> Guardar cambios
-                        </button>
-                    </div>
-                </form>
+                  <div class="mb-3">
+                      <label class="fw-bold">Stock</label>
+                      <input
+                          class="form-control form-control-lg text-center"
+                          type="number"
+                          name="stock"
+                          id="edit_stock"
+                          required
+                          min="0"
+                      >
+                  </div>
+                  <div class="text-end mt-4">
+                      <button type="submit" class="btn btn-success px-4">
+                          <i class="fa fa-save"></i> Guardar stock
+                      </button>
+                  </div>
+              </form>
             </div>
 
         </div>
@@ -169,8 +147,7 @@
                         <li>O la primera columna con nombres de variedades</li>
                     </ul>
                 </div>
-
-                <!-- ✅ TARJETA MEJORADA -->
+    
                 <div class="card border-0 shadow-sm excel-card">
                     <div class="card-body">
                         <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
@@ -212,8 +189,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- ✅ /TARJETA MEJORADA -->
-
             </div>
 
             <div class="modal-footer">
@@ -315,11 +290,11 @@ function cerrarModalSeguro(modalId) {
   }, 200);
 }
 
-/* ✅ Medidas EXACTAS */
+/*  Medidas EXACTAS */
 const MEDIDAS = ["OPE","40","50","60","70","80","90"];
 let matriz = {};
 let VAR_MAP = {};
-let VAR_SET = new Set();   // ✅ Bloqueo real de duplicados SIEMPRE
+let VAR_SET = new Set();  
 
 let dataTable = null;
 
@@ -351,12 +326,12 @@ function invalidateDraw() {
   }
 }
 
-/* ✅ NO DUPLICADOS + actualiza ID + SIEMPRE alimenta VAR_SET */
+/* NO DUPLICADOS + actualiza ID + SIEMPRE alimenta VAR_SET */
 function agregarFilaVariedadSiNoExiste(nombreVariedad, variedadId="") {
   const vKey = normalizarTexto(nombreVariedad);
   if (!vKey) return null;
 
-  // ✅ set para bloquear duplicados en TODOS lados
+  // set para bloquear duplicados en TODOS lados
   VAR_SET.add(vKey);
 
   // mantener mapa
@@ -366,7 +341,7 @@ function agregarFilaVariedadSiNoExiste(nombreVariedad, variedadId="") {
   // si ya existe en DOM, solo actualiza id y retorna
   let fila = document.querySelector(`#tbody_matriz tr[data-var="${vKey}"]`);
   if (fila) {
-    if (variedadId) fila.dataset.variedadId = variedadId; // ✅ siempre
+    if (variedadId) fila.dataset.variedadId = variedadId; // 
     if (variedadId && VAR_MAP[vKey]) VAR_MAP[vKey].id = variedadId;
     return fila;
   }
@@ -409,7 +384,7 @@ function agregarFilaVariedadSiNoExiste(nombreVariedad, variedadId="") {
     fila.appendChild(td);
   });
 
-  // ✅ Si DataTables está activo, agrega usando su API (si no, al DOM normal)
+  //  Si DataTables está activo, agrega usando su API (si no, al DOM normal)
   if (dataTable && $.fn.DataTable.isDataTable('#tabla_matriz')) {
     dataTable.row.add(fila).draw(false);
   } else {
@@ -457,7 +432,7 @@ function resetearTablaACero() {
   });
 }
 
-/* ✅ setCelda guarda id/mesa/fechas para EDITAR bien */
+/* setCelda guarda id/mesa/fechas para EDITAR bien */
 function setCelda(variedadOriginal, medidaOriginal, total, refItem) {
   const vKey = normalizarTexto(variedadOriginal);
   const mKey = normalizarMedida(medidaOriginal);
@@ -542,7 +517,7 @@ function cargarMatriz(url="/api/disponibilidades/") {
     .catch(err => console.error("❌ Error carga matriz disponibilidad:", err));
 }
 
-/* ✅ Modal editar */
+/*  Modal editar */
 function abrirModalEdicionDesdeCelda(td) {
   const variedad = td.dataset.variedad || "";
   const medida = td.dataset.medida || "";
@@ -553,26 +528,12 @@ function abrirModalEdicionDesdeCelda(td) {
   document.getElementById("editInfoMed").textContent = medida || "—";
 
   document.getElementById("edit_id").value = idRegistro;
-  document.getElementById("edit_variedad").value = variedad;
-  document.getElementById("edit_medida").value = medida;
   document.getElementById("edit_stock").value = stock;
-
-  document.getElementById("edit_mesa").value = td.dataset.mesa || "";
-
-  const fe = td.dataset.fecha_entrada ? isoToDatetimeLocal(td.dataset.fecha_entrada) : "";
-  const fs = td.dataset.fecha_salida ? isoToDatetimeLocal(td.dataset.fecha_salida) : "";
-
-  if (fe) document.getElementById("edit_fecha_entrada").value = fe;
-  else {
-    const now = new Date();
-    const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0,16);
-    document.getElementById("edit_fecha_entrada").value = localISO;
-  }
-  document.getElementById("edit_fecha_salida").value = fs;
 
   const modal = new bootstrap.Modal(document.getElementById("modalEditarCelda"));
   modal.show();
 }
+
 
 /* DataTables */
 function initDataTables() {
@@ -586,24 +547,33 @@ function initDataTables() {
     order: [],
     ordering: false,
     responsive: true,
-    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-         '<"row"<"col-sm-12"tr>>' +
-         '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>' +
-         '<"row"<"col-sm-12"B>>',
+     dom: 
+        "<'row mb-2'" +
+            "<'col-md-6'l>" +
+            "<'col-md-6 text-end'f>" +
+        ">" +
+        "<'row mb-2'" +
+            "<'col-md-12'B>" +
+        ">" +
+        "rt" +
+        "<'row mt-2'" +
+            "<'col-md-5'i>" +
+            "<'col-md-7'p>" +
+        ">",
     buttons: [
-      { extend: 'copy',  text: '<i class="fa fa-copy"></i> Copiar', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' } },
-      { extend: 'csv',   text: '<i class="fa fa-file-csv"></i> CSV', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' }, filename: 'disponibilidad_' + new Date().toISOString().slice(0, 10) },
-      { extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' }, filename: 'disponibilidad_' + new Date().toISOString().slice(0, 10) },
-      { extend: 'pdf',   text: '<i class="fa fa-file-pdf"></i> PDF', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' }, filename: 'disponibilidad_' + new Date().toISOString().slice(0, 10) },
-      { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' } },
-      { extend: 'colvis', text: '<i class="fa fa-columns"></i> Columnas', className: 'btn btn-sm btn-outline-secondary' }
+      { extend: 'copy',  text: '<i class="fa fa-copy"></i> Copiar', className: 'btn btn-secondary', exportOptions: { columns: ':visible' } },
+      { extend: 'csv',   text: '<i class="fa fa-file-csv"></i> CSV', className: 'btn btn-dark', exportOptions: { columns: ':visible' }, filename: 'disponibilidad_' + new Date().toISOString().slice(0, 10) },
+      { extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel', className: 'btn btn-success', exportOptions: { columns: ':visible' }, filename: 'disponibilidad_' + new Date().toISOString().slice(0, 10) },
+      { extend: 'pdf',   text: '<i class="fa fa-file-pdf"></i> PDF', className: 'btn btn-warning', exportOptions: { columns: ':visible' }, filename: 'disponibilidad_' + new Date().toISOString().slice(0, 10) },
+      { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir', className: 'btn btn-info', exportOptions: { columns: ':visible' } },
+
     ],
     columnDefs: [
       { targets: 0, className: 'text-start', orderable: false },
       { targets: '_all', className: 'text-center', orderable: false }
     ],
     language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
-    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+    lengthMenu: [[5,10, 25, 50, 100, -1], [5,10, 25, 50, 100, "Todos"]],
     pageLength: 25,
     autoWidth: false,
     drawCallback: function() { reapplyEventListeners(); },
@@ -611,7 +581,7 @@ function initDataTables() {
   });
 }
 
-/* ✅ Delegación eventos */
+/* Delegación eventos */
 function reapplyEventListeners() {
   $('#tabla_matriz').off('click', 'td[data-med]').on('click', 'td[data-med]', function(e) {
     e.stopPropagation();
@@ -624,16 +594,16 @@ function reapplyEventListeners() {
 
     let fila = $(this).closest('tr');
 
-    // ✅ Si DataTables Responsive creó una fila "child", la real es la anterior
+    //  Si DataTables Responsive creó una fila "child", la real es la anterior
     if (fila.hasClass('child')) fila = fila.prev();
 
     const nombre = fila.find('.var-name').text().trim() || "—";
     const vKey = normalizarTexto(nombre);
 
-    // ✅ leer ID desde el TR real
+    //  leer ID desde el TR real
     let variedadId = fila[0].dataset.variedadId || fila.attr('data-variedad-id') || "";
 
-    // ✅ fallback al mapa
+    //  fallback al mapa
     if (!variedadId && VAR_MAP[vKey]?.id) {
       variedadId = VAR_MAP[vKey].id;
       fila[0].dataset.variedadId = variedadId;
@@ -641,18 +611,16 @@ function reapplyEventListeners() {
 
 
     if (!variedadId) {
-      Swal.fire("Error", "No se encontró el ID de la variedad. Refresca y vuelve a intentar.", "error");
+      alertaError("No se encontró el ID de la variedad. Refresca y vuelve a intentar.");
       return;
     }
 
-    Swal.fire({
-      title: "¿Eliminar variedad?",
-      text: `Se eliminará la variedad: ${nombre}`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#dc3545",
+    alertaConfirmar({
+      titulo: "¿Eliminar variedad?",
+      html: `Se eliminará la variedad: <b>${nombre}</b><br><span class="text-muted">Esta acción no se puede deshacer.</span>`,
+      confirmText: "<i class='fas fa-trash me-2'></i>Eliminar",
+      cancelText: "<i class='fas fa-times me-2'></i>Cancelar",
+      confirmColor: "#dc3545"
     }).then((result) => {
       if (!result.isConfirmed) return;
 
@@ -662,6 +630,7 @@ function reapplyEventListeners() {
         headers: { "X-CSRFToken": getCookie("csrftoken") }
       })
       .then(async (resp) => {
+
         if (resp.status === 204 || resp.status === 404) {
           if (dataTable && $.fn.DataTable.isDataTable('#tabla_matriz')) {
             dataTable.row(fila[0]).remove().draw(false);
@@ -673,32 +642,33 @@ function reapplyEventListeners() {
           delete VAR_MAP[vKey];
           delete matriz[vKey];
 
-          Swal.fire(
-            resp.status === 204 ? "Eliminado" : "Aviso",
-            resp.status === 204 ? "La variedad fue eliminada." : "La variedad no existe o ya fue eliminada.",
-            resp.status === 204 ? "success" : "info"
-          );
+          if (resp.status === 204) {
+            alertaExito("La variedad fue eliminada.");
+          } else {
+            alertaInfo("La variedad no existe o ya fue eliminada.");
+          }
+
           return;
         }
 
         if (resp.status === 409) {
           const data = await resp.json().catch(() => ({}));
-          Swal.fire("No se pudo eliminar", data.detail || "No puedes borrar esta variedad porque tiene stock/movimientos.", "error");
+          alertaError(data.detail || "No puedes borrar esta variedad porque tiene stock/movimientos.");
           return;
         }
 
         const data = await resp.json().catch(() => ({}));
-        Swal.fire("Error", data.detail || "No se pudo eliminar la variedad.", "error");
+        alertaError(data.detail || "No se pudo eliminar la variedad.");
       })
       .catch(err => {
         console.error(err);
-        Swal.fire("Error", "Error de red al eliminar.", "error");
+        alertaError("Error de red al eliminar.");
       });
     });
   });
 }
 
-/* ✅ Helpers UI Excel */
+/*  Helpers UI Excel */
 function setExcelUIState({badgeText="Sin archivo", badgeClass="text-bg-secondary", loading=false, msgHTML=""} = {}) {
   const badge = document.getElementById("excelEstadoBadge");
   const btnUp = document.getElementById("btnSubirExcelBD");
@@ -726,7 +696,7 @@ function limpiarExcelInput() {
 }
 
 function parseExcelResponse(resp) {
-  // ✅ Soporta múltiples formatos de backend
+  //  Soporta múltiples formatos de backend
   const creadasRaw = resp?.creadas ?? resp?.created ?? resp?.inserted ?? resp?.nuevas ?? resp?.nuevos ?? 0;
   const existentesRaw = resp?.existentes ?? resp?.existing ?? resp?.duplicadas ?? resp?.repetidas ?? 0;
 
@@ -752,12 +722,12 @@ async function recargarTodoLimpio() {
   await cargarMatriz();
 }
 
-/* ✅ Subida Excel (manual o automática) */
+/* Subida Excel (manual o automática) */
 async function subirExcelVariedades() {
   const inp = document.getElementById("inputExcelVariedades");
   const f = inp.files[0];
   if (!f) {
-    Swal.fire("Advertencia","Selecciona un archivo Excel.","warning");
+    alertaInfo("Selecciona un archivo Excel.");
     return;
   }
 
@@ -765,13 +735,11 @@ async function subirExcelVariedades() {
     badgeText: "Subiendo...",
     badgeClass: "text-bg-warning",
     loading: true,
-    msgHTML: "⏳ Subiendo Excel..."
+    msgHTML: " Subiendo Excel..."
   });
 
   const fd = new FormData();
   fd.append("file", f);
-  // 👇 SI tu backend espera otro nombre, cambia "file" por:
-  // fd.append("excel", f);  // o "archivo"
 
   try {
     const r = await fetch("/api/variedades/excel/", {
@@ -788,7 +756,7 @@ async function subirExcelVariedades() {
         badgeText: "Error",
         badgeClass: "text-bg-danger",
         loading: false,
-        msgHTML: `❌ ${resp.detail || "No se pudo procesar el Excel."}`
+        msgHTML: ` ${resp.detail || "No se pudo procesar el Excel."}`
       });
       return;
     }
@@ -799,14 +767,11 @@ async function subirExcelVariedades() {
       badgeText: "Listo",
       badgeClass: "text-bg-success",
       loading: false,
-      msgHTML: `✅ Listo. Creadas: <b>${creadas}</b> | Existentes: <b>${existentes}</b> | Total: <b>${total}</b>`
+      msgHTML: ` Listo. Creadas: <b>${creadas}</b> | Existentes: <b>${existentes}</b> | Total: <b>${total}</b>`
     });
 
-    // ✅ Recargar para reflejar en tabla sin duplicar
-    await recargarTodoLimpio();
 
-    // ✅ opcional: cerrar modal automáticamente
-    // cerrarModalSeguro("modalSubirExcel");
+    await recargarTodoLimpio();
 
   } catch (e) {
     console.error(e);
@@ -835,11 +800,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const vKey = normalizarTexto(nombre);
 
     if (!nombre) {
-      Swal.fire({ title:"Advertencia", text:"Escribe el nombre de la variedad.", icon:"warning" });
+      alertaInfo("Escribe el nombre de la variedad.");
       return;
     }
     if (VAR_SET.has(vKey)) {
-      Swal.fire({ title:"Aviso", text:"La variedad ya existe (duplicado bloqueado).", icon:"warning" });
+      alertaInfo("La variedad ya existe (duplicado bloqueado).");
       return;
     }
 
@@ -855,11 +820,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok) {
-      Swal.fire({ title:"Error", text: data.detail || "No se pudo guardar la variedad.", icon:"error" });
+      alertaError(data.detail || "No se pudo guardar la variedad.");
       return;
     }
 
-    // ✅ Soporta respuesta de ViewSet (root) y de tu api manual ({variedad:{...}})
     const v = (data && data.variedad) ? data.variedad : data;
 
     // toma id y nombre de forma segura
@@ -879,11 +843,10 @@ document.addEventListener("DOMContentLoaded", () => {
     input.value = "";
     cerrarModalSeguro("modalAgregarVariedad");
 
-    Swal.fire({ title:"Éxito", text:"Variedad agregada correctamente.", icon:"success" });
+    alertaExito("Variedad agregada correctamente.");
     setTimeout(reapplyEventListeners, 50);
   });
 
-  // ✅ Excel: auto-subir al seleccionar archivo
   const inputExcel = document.getElementById("inputExcelVariedades");
   const btnUp = document.getElementById("btnSubirExcelBD");
   const btnClr = document.getElementById("btnLimpiarExcel");
@@ -894,21 +857,27 @@ document.addEventListener("DOMContentLoaded", () => {
       limpiarExcelInput();
       return;
     }
-    document.getElementById("btnLimpiarExcel").disabled = false;
+
+    btnClr.disabled = false;
+
     setExcelUIState({
       badgeText: "Archivo listo",
       badgeClass: "text-bg-primary",
       loading: false,
-      msgHTML: `📄 Archivo seleccionado: <b>${f.name}</b> (se subirá automáticamente)`
+      msgHTML: `Archivo seleccionado: <b>${f.name}</b> (listo para subir)`
     });
-
-    // ✅ auto upload
-    subirExcelVariedades();
   });
+
 
   btnUp.addEventListener("click", () => {
+    const f = inputExcel.files[0];
+    if (!f) {
+      Swal.fire("Advertencia","Selecciona un archivo Excel.","warning");
+      return;
+    }
     subirExcelVariedades();
   });
+
 
   btnClr.addEventListener("click", () => {
     limpiarExcelInput();

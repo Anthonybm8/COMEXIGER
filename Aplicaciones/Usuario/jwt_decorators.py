@@ -6,22 +6,6 @@ from Aplicaciones.Usuario.jwt_utils import decodificar_token
 from Aplicaciones.Usuario.models import Usuario
 
 def jwt_required(view_func=None, *, allowed_cargos=None, enforce_mesa=False):
-    """
-    Decorador JWT para tus Django views (JsonResponse).
-
-    - Espera: Authorization: Bearer <access_token>
-    - Decodifica y valida payload["type"] == "access"
-    - Carga Usuario por payload["sub"]
-    - Adjunta:
-        request.usuario
-        request.jwt_payload
-
-    Opcional:
-    - allowed_cargos: ["OPERARIO", "SUPERVISOR", "ADMIN"]
-    - enforce_mesa: si True, obliga a que la mesa solicitada coincida con request.usuario.mesa
-      (excepto cargos altos)
-    """
-
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
@@ -56,11 +40,11 @@ def jwt_required(view_func=None, *, allowed_cargos=None, enforce_mesa=False):
             except Usuario.DoesNotExist:
                 return JsonResponse({"success": False, "error": "Usuario no existe"}, status=401)
 
-            # ✅ Adjuntar al request para usar en views
+
             request.usuario = usuario
             request.jwt_payload = payload
 
-            # ✅ Permiso por cargo (sin roles de Django)
+
             if allowed_cargos:
                 cargo_user = (usuario.cargo or "").strip().upper()
                 allowed = [c.strip().upper() for c in allowed_cargos]
@@ -70,7 +54,7 @@ def jwt_required(view_func=None, *, allowed_cargos=None, enforce_mesa=False):
                         status=403
                     )
 
-            # ✅ Enforce mesa: que no consulten / inicien jornada de otra mesa (seguridad real)
+       
             if enforce_mesa:
                 cargo_user = (usuario.cargo or "").strip().upper()
                 # cargos con acceso global (ajusta si quieres)

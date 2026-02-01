@@ -101,7 +101,6 @@
         <td>{{ r.extras_por_hora|default_if_none:"-" }}</td>
 
         <td>
-          <!-- ✅ EDITAR: ABRE MODAL GLOBAL Y ENVÍA DATA -->
           <button
             type="button"
             class="btn btn-outline-warning btn-editar"
@@ -117,7 +116,6 @@
             <i class="fa fa-pen"></i>
           </button>
 
-          <!-- ✅ ELIMINAR (URL CORRECTA SEGÚN TU urls.py) -->
           <a href="{% url 'eliminar_rendimiento' r.id %}"
              class="btn btn-outline-danger btn-eliminar"
              data-id="{{ r.id }}"
@@ -130,7 +128,6 @@
     </tbody>
   </table>
 
-  <!-- ✅ MODAL GLOBAL (UNO SOLO, SIEMPRE EXISTE) -->
   <div class="modal fade" id="modalEditarGlobal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
@@ -149,7 +146,7 @@
             <input class="form-control" type="number" name="numero_mesa" id="edit_mesa" required><br>
 
             <label>Rendimiento</label>
-            <input class="form-control" type="number" name="rendimiento" id="edit_rendimiento" required><br>
+            <input class="form-control" type="number" name="rendimiento" id="edit_rendimiento" readonly><br>
 
             <label>Inicio</label>
             <input class="form-control" type="datetime-local" name="hora_inicio" id="edit_inicio"><br>
@@ -193,24 +190,19 @@
     const url = $(this).attr('href');
     const nombre = $(this).data('nombre') || 'este rendimiento';
 
-    SwalDark.fire({
-      title: "¿Eliminar rendimiento?",
-      html: `Vas a eliminar el registro de <b>${nombre}</b><br><span style="color:#FFD700;">Esta acción no se puede deshacer.</span>`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar"
+    alertaConfirmar({
+      titulo: "¿Eliminar rendimiento?",
+      html: `Vas a eliminar el registro de <b>${nombre}</b><br><span class="text-muted">Esta acción no se puede deshacer</span>`,
+      confirmText: "<i class='fas fa-trash me-2'></i>Eliminar",
+      cancelText: "<i class='fas fa-times me-2'></i>Cancelar",
+      confirmColor: "#dc3545"
     }).then((result) => {
       if (result.isConfirmed) {
-        SwalDark.fire({
-          title: "Eliminando...",
-          text: "Por favor espera",
-          allowOutsideClick: false,
-          didOpen: () => Swal.showLoading()
-        });
+        alertaCargando("Eliminando...", "Por favor espera");
         window.location.href = url;
       }
     });
+
 
   });
 
@@ -324,11 +316,11 @@
 
       dom: 'lBfrtip',
       buttons: [
-        { extend: 'copy',  text: '<i class="fa fa-copy"></i> Copiar' },
-        { extend: 'csv',   text: '<i class="fa fa-file-csv"></i> CSV' },
-        { extend: 'excel', text: '<i class="fa fa-file-excel"></i> Excel' },
-        { extend: 'pdf',   text: '<i class="fa fa-file-pdf"></i> PDF' },
-        { extend: 'print', text: '<i class="fa fa-print"></i> Imprimir' }
+        { extend: 'copy',className: 'btn btn-secondary',text: '<i class="fa fa-copy"></i> Copiar' },
+        { extend: 'csv',className: 'btn btn-dark',   text: '<i class="fa fa-file-csv"></i> CSV' },
+        { extend: 'excel',className: 'btn btn-success', text: '<i class="fa fa-file-excel"></i> Excel' },
+        { extend: 'pdf',className: 'btn btn-warning',   text: '<i class="fa fa-file-pdf"></i> PDF' },
+        { extend: 'print',className: 'btn btn-info', text: '<i class="fa fa-print"></i> Imprimir' }
       ],
 
       columnDefs: [
@@ -336,12 +328,15 @@
         { targets: [0, 8], responsivePriority: 10000 }
       ],
 
-      language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' }
+      language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+      lengthMenu: [[5,10, 25, 50, 100, -1], [5,10, 25, 50, 100, "Todos"]],
+      pageLength: 25,
+      autoWidth: false,
     });
 
 
     // =======================
-    // ✅ LLENAR MODAL GLOBAL AL EDITAR
+    // LLENAR MODAL GLOBAL AL EDITAR
     // =======================
     $(document).on("click", ".btn-editar", function () {
       const btn = $(this);

@@ -180,7 +180,7 @@
 
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
     <div>
-      <h2 class="page-title mb-1">👤 Nuevo Registro de Usuario</h2>
+      <h2 class="page-title mb-1">Nuevo Registro de Usuario</h2>
       <div class="page-subtitle">Completa los datos para crear el usuario</div>
     </div>
 
@@ -204,7 +204,6 @@
     <div class="card-body">
       <hr class="soft-hr mb-4">
 
-      <!-- ✅ novalidate: evita "Completa este campo" del navegador -->
       <form action="{% url 'guardar_usuario' %}" method="post" id="form_usuario" autocomplete="off" novalidate>
         {% csrf_token %}
 
@@ -213,7 +212,7 @@
             <label for="nombres" class="form-label">Nombres</label>
             <div class="input-group">
               <span class="input-group-text"><i class="fa fa-user"></i></span>
-              <input class="form-control" type="text" name="nombres" id="nombres" placeholder="Ej: Karen">
+              <input class="form-control" type="text" name="nombres" id="nombres" placeholder="Ej: Alma Marcela">
             </div>
           </div>
 
@@ -221,7 +220,7 @@
             <label for="apellidos" class="form-label">Apellidos</label>
             <div class="input-group">
               <span class="input-group-text"><i class="fa fa-user"></i></span>
-              <input class="form-control" type="text" name="apellidos" id="apellidos" placeholder="Ej: Barcia">
+              <input class="form-control" type="text" name="apellidos" id="apellidos" placeholder="Ej: Paredes Jimenez">
             </div>
           </div>
 
@@ -242,7 +241,7 @@
             <label for="cargo" class="form-label">Cargo</label>
             <div class="input-group">
               <span class="input-group-text"><i class="fa fa-briefcase"></i></span>
-              <input class="form-control" type="text" name="cargo" id="cargo" placeholder="Ej: Administrador">
+              <input class="form-control" type="text" name="cargo" id="cargo" placeholder="Ej: Clasificadora/o">
             </div>
           </div>
 
@@ -250,7 +249,7 @@
             <label for="username" class="form-label">Usuario</label>
             <div class="input-group">
               <span class="input-group-text"><i class="fa fa-id-badge"></i></span>
-              <input class="form-control" type="text" name="username" id="username" placeholder="Ej: karen.barcia">
+              <input class="form-control" type="text" name="username" id="username" placeholder="Ej: Usuario23">
             </div>
             <small class="help-text d-block mt-2">
               Usa letras/números y <b>.</b> <b>_</b> <b>-</b> (sin espacios)
@@ -338,7 +337,6 @@
 {% block extra_scripts %}
 {{ block.super }}
 
-<!-- ✅ jQuery + Validate (si ya los tienes en plantilla, quita estas 2 líneas para evitar duplicados) -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 

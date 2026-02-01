@@ -14,12 +14,11 @@ def _broadcast_rendimiento(rendimiento):
 
     data = RendimientoSerializer(rendimiento).data
 
-    # ✅ opcional: asegurar que hora_inicio/hora_final salgan como "HH:MM"
-    # si serializer te devuelve "02:06:03" está bien, en front cortamos a HH:MM
+   
     async_to_sync(channel_layer.group_send)(
         "rendimientos",
         {
-            "type": "nuevo_rendimiento",  # 👈 debe coincidir con tu consumer
+            "type": "nuevo_rendimiento",
             "data": data
         }
     )
@@ -39,7 +38,6 @@ def iniciar_jornada_api(request):
         rendimiento_val = int(data.get("rendimiento") or 20)
         ramos_base_val  = int(data.get("ramos_base") or 0)
 
-        # ✅ NO depender de "hoy": buscar jornada activa real
         jornada_activa = (Rendimiento.objects
             .filter(qr_id="JORNADA", numero_mesa=mesa, hora_final__isnull=True)
             .order_by("-hora_inicio", "-fecha_entrada")

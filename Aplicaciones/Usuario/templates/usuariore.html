@@ -4,20 +4,16 @@
 {% block head %}
 {{ block.super }}
 
-<!-- ✅ DataTables CSS (Bootstrap 5) -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 
-<!-- ✅ DataTables Buttons CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
 
-<!-- ✅ SweetAlert2 CSS (si no lo tienes en plantilla) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 <style>
   table.dataTable thead th { white-space: nowrap; }
 
-  /* ✅ SOLO PARA QUE EL BUSCADOR SE VEA BONITO (no afecta funcionalidad) */
   .dataTables_wrapper .dataTables_filter {
     text-align: right;
     padding: 12px 16px 0 16px;
@@ -62,7 +58,7 @@
   <!-- HEADER MEJORADO -->
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
     <div class="mb-3 mb-md-0">
-      <h1 class="fw-bold text-dark mb-1">👥 Gestión de Usuarios</h1>
+      <h1 class="fw-bold text-dark mb-1">Gestión de Usuarios</h1>
       <p class="text-muted mb-0">Administración de usuarios del sistema</p>
     </div>
     
@@ -78,7 +74,6 @@
   
   <hr class="border-2 opacity-50 mb-5">
 
-  <!-- ✅ TABLA MEJORADA -->
   <div class="card border-0 shadow-lg">
     <div class="card-body p-0">
       <div class="table-responsive">
@@ -169,7 +164,6 @@
   </div>
 </main>
 
-<!-- ✅ MODALES EDITAR (MEJORADOS) -->
 {% for u in usuario %}
 <div class="modal fade" id="modalEditar{{ u.id }}" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -298,7 +292,6 @@
           <i class="fas fa-times me-2"></i>Cancelar
         </button>
 
-        <!-- ✅ NO QUITO NADA: solo hago que el submit apunte al form correcto -->
         <button type="submit" class="btn btn-lg btn-success px-4"
                 onclick="$(this).closest('.modal-content').find('form.form_usuario').submit();">
           <i class="fas fa-save me-2"></i>Guardar Cambios
@@ -313,16 +306,16 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<!-- ✅ jQuery (debe ir ANTES de DataTables) -->
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-<!-- ✅ DataTables JS -->
+
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
 
-<!-- ✅ Buttons (SI NO ESTO, FALLA buttons:[] ) -->
+
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -331,10 +324,10 @@
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
 
-<!-- ✅ jQuery Validation -->
+
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 
-<!-- ✅ SweetAlert2 -->
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -398,39 +391,38 @@ $(function () {
     });
   });
 
-  // ✅ DataTables
+
   const tabla = $('#table_usuarios').DataTable({
     responsive: true,
 
-    /* ✅ AQUI ESTABA EL PROBLEMA: tu DOM NO incluye "f" (filter), por eso no aparece el buscador.
-       No quito nada: solo agrego el buscador dentro del header, entre l y B. */
+  
     dom: '<"row"<"col-sm-12 col-md-4"l><"col-sm-12 col-md-4 text-md-center"f><"col-sm-12 col-md-4 d-flex justify-content-md-end"B>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
 
     buttons: [
       {
         extend: 'copy',
         text: '<i class="fas fa-copy me-2"></i>Copiar',
-        className: 'btn btn-outline-secondary'
+        className: 'btn btn-secondary'
       },
       {
         extend: 'csv',
         text: '<i class="fas fa-file-csv me-2"></i>CSV',
-        className: 'btn btn-outline-primary'
+        className: 'btn btn-dark'
       },
       {
         extend: 'excel',
         text: '<i class="fas fa-file-excel me-2"></i>Excel',
-        className: 'btn btn-outline-success'
+        className: 'btn btn-success'
       },
       {
         extend: 'pdf',
         text: '<i class="fas fa-file-pdf me-2"></i>PDF',
-        className: 'btn btn-outline-danger'
+        className: 'btn btn-warning'
       },
       {
         extend: 'print',
         text: '<i class="fas fa-print me-2"></i>Imprimir',
-        className: 'btn btn-outline-info'
+        className: 'btn btn-info'
       }
     ],
     language: {
@@ -443,7 +435,7 @@ $(function () {
     ]
   });
 
-  // ✅ Confirmar eliminación
+ 
   $(document).on('click', '.btn-eliminar', function(e){
     e.preventDefault();
 

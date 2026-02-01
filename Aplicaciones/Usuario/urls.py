@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views  # Solo views, NO api_views
+from . import views 
 
 urlpatterns = [
     path('iniciose', views.inicio, name='iniciose'),
@@ -14,5 +14,5 @@ urlpatterns = [
     
     
     
-    # NO INCLUIR RUTAS API AQUÍ - van en COMEXIGER/urls.py
+
 ]

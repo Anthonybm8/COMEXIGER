@@ -48,62 +48,25 @@ def procesar_edicion_disponibilidad(request):
     if request.method == "POST":
         try:
             _id = (request.POST.get("id") or "").strip()
-
-            numero_mesa = request.POST.get("numero_mesa")
-            variedad = (request.POST.get("variedad") or "").strip()
-            medida = (request.POST.get("medida") or "").strip()
             stock = int(request.POST.get("stock") or 0)
-
-            # fecha_entrada (datetime-local)
-            fecha_entrada = None
-            if request.POST.get("fecha_entrada"):
-                fecha_entrada = datetime.strptime(
-                    request.POST["fecha_entrada"], "%Y-%m-%dT%H:%M"
-                )
-                # opcional: hacer aware
-                if timezone.is_naive(fecha_entrada):
-                    fecha_entrada = timezone.make_aware(fecha_entrada, timezone.get_current_timezone())
-            else:
-                fecha_entrada = timezone.now()
-
-            # fecha_salida
-            fecha_salida = None
-            if request.POST.get("fecha_salida"):
-                fecha_salida = datetime.strptime(
-                    request.POST["fecha_salida"], "%Y-%m-%dT%H:%M"
-                )
-                if timezone.is_naive(fecha_salida):
-                    fecha_salida = timezone.make_aware(fecha_salida, timezone.get_current_timezone())
-
-            # ==========================
-            # ✅ UPSERT (EDITA o CREA)
-            # ==========================
             if _id:
                 d = Disponibilidad.objects.get(id=_id)  # edita
-                d.numero_mesa = numero_mesa
-                d.variedad = variedad
-                d.medida = medida
                 d.stock = stock
-                d.fecha_entrada = fecha_entrada
-                d.fecha_salida = fecha_salida
+
                 d.save()
 
                 msg = "Disponibilidad actualizada correctamente"
             else:
                 # crea un registro nuevo (editar el 0)
                 d = Disponibilidad.objects.create(
-                    numero_mesa=numero_mesa,
-                    variedad=variedad,
-                    medida=medida,
+                    
                     stock=stock,
-                    fecha_entrada=fecha_entrada,
-                    fecha_salida=fecha_salida
                 )
 
-                msg = "Disponibilidad creada (se editó el 0) correctamente"
+                msg = "Disponibilidad editada correctamente"
 
             # ==========================
-            # ✅ WEBSOCKET igual que antes
+            #  WEBSOCKET igual que antes
             # ==========================
             async_to_sync(get_channel_layer().group_send)(
                 "disponibilidad",
@@ -149,9 +112,9 @@ class DisponibilidadViewSet(viewsets.ModelViewSet):
 # =========================
 @api_view(['GET', 'POST'])
 def api_disponibilidad_list(request):
-    print("👤 user:", request.user, "auth:", request.user.is_authenticated)
-    print("🍪 cookies:", request.COOKIES)
-    print("📌 session keys:", list(request.session.keys()))
+    print(" user:", request.user, "auth:", request.user.is_authenticated)
+    print(" cookies:", request.COOKIES)
+    print("session keys:", list(request.session.keys()))
 
     if request.method == 'GET':
         ordenar = request.query_params.get("ordenar")
@@ -216,7 +179,7 @@ def api_disponibilidad_list(request):
         if existente:
             existente.stock += 1
 
-            # ✅ CLAVE: si estaba cerrada porque llegó a 0, reabrirla
+            #  CLAVE: si estaba cerrada porque llegó a 0, reabrirla
             existente.fecha_salida = None
 
             existente.save()
@@ -311,7 +274,7 @@ def api_disponibilidad_salida(request):
         )
 
 
-    # ⛔ Si ya se restó este QR una vez, NO permitir otra vez
+    #  Si ya se restó este QR una vez, NO permitir otra vez
     if QRDisponibilidadSalidaUsado.objects.filter(qr_id=codigo).exists():
         return Response(
             {"error": "Este QR ya fue utilizado en SALIDA (ya se restó una vez)"},
@@ -376,10 +339,10 @@ def variedades_api(request):
     if not nombre_raw:
         return Response({"detail": "El nombre es obligatorio."}, status=400)
 
-    # ✅ Normalizar (Explorer)
+    #  Normalizar (Explorer)
     nombre = nombre_raw.lower().capitalize()
 
-    # ✅ Mensaje desde el backend
+    #  Mensaje desde el backend
     if Variedad.objects.filter(nombre__iexact=nombre).exists():
         return Response(
             {"detail": "La variedad ya se encuentra agregada."},
@@ -493,7 +456,7 @@ class VariedadViewSet(viewsets.ModelViewSet):
             )
         return super().destroy(request, *args, **kwargs)
 
-    # ✅ AQUÍ el excel SIN choque con /<pk>/
+    #  AQUÍ el excel SIN choque con /<pk>/
     @action(detail=False, methods=["post"], url_path="excel")
     def excel(self, request):
         file = request.FILES.get("file")
@@ -558,7 +521,7 @@ class VariedadViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])  # ✅ requiere token
+@permission_classes([IsAuthenticated]) 
 def listar_variedades_api(request):
     variedades = Variedad.objects.all().order_by('nombre')
     data = [{'id': v.id, 'nombre': v.nombre} for v in variedades]

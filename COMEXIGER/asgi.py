@@ -10,7 +10,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "COMEXIGER.settings")
 
 django_asgi_app = get_asgi_application()
 
-# Importar routings
+
 import Aplicaciones.Rendimiento.routing
 import Aplicaciones.Disponibilidad.routing
 

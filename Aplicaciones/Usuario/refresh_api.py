@@ -16,13 +16,12 @@ def refresh_token_api(request):
         if not refresh:
             return JsonResponse({"success": False, "error": "Falta refresh token"}, status=400)
 
-        # ✅ DEBUG: mira si llega el token
-        # print("REFRESH RECIBIDO:", refresh[:30], "...")
+
 
         try:
             payload = decodificar_token(refresh)
         except Exception as e:
-            print("❌ ERROR DECODIFICAR REFRESH:", repr(e))
+            print(" ERROR DECODIFICAR REFRESH:", repr(e))
             return JsonResponse({"success": False, "error": "Refresh inválido o expirado"}, status=401)
 
         if payload.get("type") != "refresh":
@@ -39,5 +38,5 @@ def refresh_token_api(request):
     except json.JSONDecodeError:
         return JsonResponse({"success": False, "error": "JSON inválido"}, status=400)
     except Exception as e:
-        print("❌ ERROR GENERAL REFRESH:", repr(e))
+        print("ERROR GENERAL REFRESH:", repr(e))
         return JsonResponse({"success": False, "error": f"Error del servidor: {str(e)}"}, status=500)

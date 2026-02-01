@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password, check_password
 class Mesa(models.Model):
-    nombre = models.CharField(max_length=100, unique=True)  # ✅ único atributo
+    nombre = models.CharField(max_length=100, unique=True) 
 
     def __str__(self):
         return self.nombre

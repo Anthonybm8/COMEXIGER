@@ -36,7 +36,7 @@ def jwt_required(view_func):
             request.api_user = None
             return view_func(request, *args, **kwargs)
 
-        # ✅ Usuario normal: usamos "sub" (nuevo)
+  
         user_id = payload.get("sub") or payload.get("user_id")  # compatibilidad
         if not user_id:
             return JsonResponse({"success": False, "error": "Token sin sub/user_id"}, status=401)
