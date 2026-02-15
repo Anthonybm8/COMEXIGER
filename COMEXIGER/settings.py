@@ -169,6 +169,9 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+# En plantillas de terceros (AdminLTE) pueden faltar archivos *.map.
+# Para despliegues de prueba evitamos que collectstatic falle por eso.
+WHITENOISE_MANIFEST_STRICT = False
 
 
 # Default primary key field type
