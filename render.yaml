@@ -13,3 +13,5 @@ services:
         value: "comexiger-pruebas.onrender.com"
       - key: CSRF_TRUSTED_ORIGINS
         value: "https://comexiger-pruebas.onrender.com"
+      - key: USE_MANIFEST_STATIC
+        value: "False"

@@ -166,12 +166,13 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": (
+            "whitenoise.storage.CompressedManifestStaticFilesStorage"
+            if _env_bool("USE_MANIFEST_STATIC", False)
+            else "whitenoise.storage.CompressedStaticFilesStorage"
+        ),
     },
 }
-# En plantillas de terceros (AdminLTE) pueden faltar archivos *.map.
-# Para despliegues de prueba evitamos que collectstatic falle por eso.
-WHITENOISE_MANIFEST_STRICT = False
 
 
 # Default primary key field type
