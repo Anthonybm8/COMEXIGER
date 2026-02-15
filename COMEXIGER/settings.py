@@ -153,8 +153,8 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
     ),
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "Aplicaciones.Usuario.authentication.WebSessionAuthentication",   # ✅ WEB
-        "Aplicaciones.Usuario.authentication.UsuarioJWTAuthentication",   # ✅ MÓVIL
+        "Aplicaciones.Usuario.authentication.WebSessionAuthentication",   
+        "Aplicaciones.Usuario.authentication.UsuarioJWTAuthentication",  
     ),
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",

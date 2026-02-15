@@ -1,4 +1,4 @@
-# Rendimiento/models.py
+
 from django.db import models
 from django.utils import timezone
 from datetime import datetime
@@ -23,21 +23,19 @@ class Rendimiento(models.Model):
     numero_mesa = models.CharField(max_length=50)
     fecha_entrada = models.DateTimeField()
 
-    # Datos que llegan desde la app
+
     hora_inicio = models.DateTimeField(null=True, blank=True)
     hora_final = models.DateTimeField(null=True, blank=True)
 
-    # Datos base configurables
-    rendimiento = models.IntegerField(default=0)   # ej: 20
-    ramos_base = models.IntegerField(default=0)    # (este NO lo usas en fórmula; tu base real sale del cálculo)
+    rendimiento = models.IntegerField(default=0)   
+    ramos_base = models.IntegerField(default=0)    
 
-    bonches = models.IntegerField(default=0)       # reales
+    bonches = models.IntegerField(default=0)     
 
-    # Campos calculados
     horas_trabajadas = models.FloatField(null=True, blank=True)
-    ramos_esperados = models.FloatField(null=True, blank=True)   # = RAMOS BASE (Excel)
+    ramos_esperados = models.FloatField(null=True, blank=True)  
     ramos_extras = models.FloatField(null=True, blank=True)
-    extras_por_hora = models.FloatField(null=True, blank=True)   # = HORAS GANADAS (Excel)
+    extras_por_hora = models.FloatField(null=True, blank=True)   
 
     from decimal import Decimal, ROUND_FLOOR
 

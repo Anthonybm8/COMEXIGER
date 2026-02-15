@@ -24,7 +24,7 @@ def _broadcast_rendimiento(rendimiento):
     )
 
 @csrf_exempt
-@jwt_required
+@jwt_required(enforce_mesa=True)
 def iniciar_jornada_api(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Método no permitido. Use POST"}, status=405)
@@ -79,7 +79,7 @@ def iniciar_jornada_api(request):
 
 
 @csrf_exempt
-@jwt_required
+@jwt_required(enforce_mesa=True)
 def finalizar_jornada_api(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Método no permitido. Use POST"}, status=405)
@@ -117,7 +117,7 @@ def finalizar_jornada_api(request):
 
 
 @csrf_exempt
-@jwt_required
+@jwt_required(enforce_mesa=True)
 def obtener_jornada_actual_api(request):
     """
     GET: /api/jornada/actual/?mesa=1
@@ -158,7 +158,7 @@ def obtener_jornada_actual_api(request):
 
 
 @csrf_exempt
-@jwt_required
+@jwt_required(enforce_mesa=True)
 def obtener_historial_jornadas_api(request):
     """
     GET: /api/jornada/historial/?mesa=1&limit=30

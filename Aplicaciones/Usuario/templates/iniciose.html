@@ -76,6 +76,32 @@
             font-size: 16px;
         }
 
+        .password-wrap {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .password-wrap input[type="password"],
+        .password-wrap input[type="text"] {
+            margin-bottom: 0;
+            padding-right: 42px;
+            box-sizing: border-box;
+        }
+
+        .toggle-pass {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #555;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0;
+        }
+
         .btn {
             width: 100%;
             padding: 12px;
@@ -104,10 +130,13 @@
         <form method="POST" action="{% url 'iniciose' %}">
             {% csrf_token %}
             <label for="usuario">USUARIO:</label>
-            <input type="text" name="usuario" required>
+            <input type="text" id="usuario" name="usuario" required>
 
             <label for="contrasena">CONTRASEÑA:</label>
-            <input type="password" name="contrasena" required>
+            <div class="password-wrap">
+                <input type="password" id="contrasena" name="contrasena" required>
+                <button type="button" class="toggle-pass" id="togglePass" aria-label="Mostrar contraseña" title="Mostrar contraseña">👁</button>
+            </div>
 
             <button type="submit" class="btn">CONTINUAR</button>
         </form>
@@ -146,5 +175,20 @@
     </script>
     {% endfor %}
 {% endif %}
+    <script>
+        (function () {
+            const input = document.getElementById("contrasena");
+            const btn = document.getElementById("togglePass");
+            if (!input || !btn) return;
+
+            btn.addEventListener("click", function () {
+                const mostrando = input.type === "text";
+                input.type = mostrando ? "password" : "text";
+                btn.textContent = mostrando ? "👁" : "🙈";
+                btn.setAttribute("aria-label", mostrando ? "Mostrar contraseña" : "Ocultar contraseña");
+                btn.setAttribute("title", mostrando ? "Mostrar contraseña" : "Ocultar contraseña");
+            });
+        })();
+    </script>
 </body>
 </html>

@@ -5,8 +5,6 @@
 <main class="container-fluid py-3">
   <h1 class="text-center">Listado de Rendimiento</h1>
   <hr>
-
-  <!-- FILTROS Y ORDENAMIENTOS -->
   <div class="card p-3 mb-4">
     <div class="row g-3">
 
@@ -416,11 +414,21 @@
       let desde = document.getElementById("fechaDesde").value;
       let hasta = document.getElementById("fechaHasta").value;
 
+      // Si solo eligen "reciente", por defecto ordenamos por fecha.
+      if (!ordenar && reciente) ordenar = "fecha";
+
+      // Fecha exacta tiene prioridad sobre rango.
+      if (fecha) {
+        desde = "";
+        hasta = "";
+      }
+
       let url = "/api/rendimientos/?";
       if (ordenar) url += `ordenar=${encodeURIComponent(ordenar)}&`;
       if (reciente) url += `reciente=${encodeURIComponent(reciente)}&`;
       if (fecha) url += `fecha=${encodeURIComponent(fecha)}&`;
-      if (desde && hasta) url += `desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}&`;
+      if (!fecha && desde) url += `desde=${encodeURIComponent(desde)}&`;
+      if (!fecha && hasta) url += `hasta=${encodeURIComponent(hasta)}&`;
 
       fetch(url)
         .then(r => r.json())
@@ -451,7 +459,8 @@
             ]);
           });
           table.draw(false);
-        });
+        })
+        .catch(() => alertaError("No se pudieron aplicar los filtros."));
     });
 
     document.getElementById("btnLimpiarFiltros").addEventListener("click", function () {
@@ -490,7 +499,8 @@
             ]);
           });
           table.draw(false);
-        });
+        })
+        .catch(() => alertaError("No se pudo recargar la tabla."));
     });
 
   });

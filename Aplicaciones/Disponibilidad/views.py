@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db import IntegrityError
 from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -6,7 +7,7 @@ from datetime import datetime
 from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_POST
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -28,8 +29,41 @@ from Aplicaciones.Usuario.jwt_decorators import jwt_required
 from django.db.models.deletion import ProtectedError
 
 
-from Aplicaciones.Usuario.web_decorators import web_login_required
+from Aplicaciones.Usuario.web_decorators import web_admin_required
+from Aplicaciones.Usuario.models import Usuario
 
+
+def _to_positive_int(value):
+    try:
+        n = int(str(value).strip())
+        return n if n > 0 else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _resolver_mesa_para_creacion(request, variedad, medida, mesa_raw):
+    mesa = _to_positive_int(mesa_raw)
+    if mesa:
+        return mesa
+
+    previo = (Disponibilidad.objects
+              .filter(variedad=variedad, medida=medida)
+              .order_by("-fecha_entrada", "-id")
+              .first())
+    if previo:
+        return previo.numero_mesa
+
+    web_user_id = request.session.get("web_user_id")
+    if web_user_id:
+        usuario = Usuario.objects.filter(id=web_user_id).only("mesa").first()
+        if usuario:
+            mesa_usuario = _to_positive_int(usuario.mesa)
+            if mesa_usuario:
+                return mesa_usuario
+
+    return 1
+
+@web_admin_required
 def inicio(request):
     disponibilidades = Disponibilidad.objects.all()
     return render(request, 'disponibilidad.html', {
@@ -37,13 +71,17 @@ def inicio(request):
     })
 
 
-@web_login_required
+@web_admin_required
 def eliminar_disponibilidad(request, id):
-    Disponibilidad.objects.get(id=id).delete()
-    messages.success(request, "Disponibilidad eliminada correctamente")
+    try:
+        Disponibilidad.objects.get(id=id).delete()
+        messages.success(request, "Disponibilidad eliminada correctamente")
+    except Disponibilidad.DoesNotExist:
+        messages.error(request, "La disponibilidad no existe.")
     return redirect('dispo')
 
-@web_login_required
+@web_admin_required
+@require_POST
 def procesar_edicion_disponibilidad(request):
     if request.method == "POST":
         try:
@@ -57,13 +95,25 @@ def procesar_edicion_disponibilidad(request):
 
                 msg = "Disponibilidad actualizada correctamente"
             else:
+                variedad = (request.POST.get("variedad") or "").strip()
+                medida = (request.POST.get("medida") or "").strip()
+                mesa_raw = request.POST.get("numero_mesa")
+
+                if not variedad or not medida:
+                    raise ValueError("Faltan variedad y medida para crear el registro.")
+
+                mesa = _resolver_mesa_para_creacion(request, variedad, medida, mesa_raw)
+
                 # crea un registro nuevo (editar el 0)
                 d = Disponibilidad.objects.create(
-                    
+                    numero_mesa=mesa,
+                    variedad=variedad,
+                    medida=medida,
                     stock=stock,
+                    fecha_entrada=timezone.now(),
                 )
 
-                msg = "Disponibilidad editada correctamente"
+                msg = "Disponibilidad creada correctamente"
 
             # ==========================
             #  WEBSOCKET igual que antes
@@ -111,6 +161,7 @@ class DisponibilidadViewSet(viewsets.ModelViewSet):
 # API MANUAL
 # =========================
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def api_disponibilidad_list(request):
     print(" user:", request.user, "auth:", request.user.is_authenticated)
     print(" cookies:", request.COOKIES)
@@ -164,8 +215,14 @@ def api_disponibilidad_list(request):
                 status=status.HTTP_409_CONFLICT
             )
 
-        # Guardar QR para siempre
-        QRDisponibilidadUsado.objects.create(qr_id=codigo)
+        # Guardar QR para siempre (protegido ante concurrencia)
+        try:
+            QRDisponibilidadUsado.objects.create(qr_id=codigo)
+        except IntegrityError:
+            return Response(
+                {"error": "Este QR ya fue utilizado en Disponibilidad"},
+                status=status.HTTP_409_CONFLICT
+            )
 
         hoy = timezone.localdate()
 
@@ -214,6 +271,7 @@ def api_disponibilidad_list(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def api_disponibilidad_detail(request, pk):
     try:
         disponibilidad = Disponibilidad.objects.get(pk=pk)
@@ -245,6 +303,7 @@ def api_disponibilidad_detail(request, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def api_disponibilidad_stats(request):
     return Response({
         "total_registros": Disponibilidad.objects.count(),
@@ -303,8 +362,14 @@ def api_disponibilidad_salida(request):
                 status=status.HTTP_409_CONFLICT
             )
 
-        # Registrar QR como ya restado
-        QRDisponibilidadSalidaUsado.objects.create(qr_id=codigo)
+        # Registrar QR como ya restado (protegido ante concurrencia)
+        try:
+            QRDisponibilidadSalidaUsado.objects.create(qr_id=codigo)
+        except IntegrityError:
+            return Response(
+                {"error": "Este QR ya fue utilizado en SALIDA (ya se restó una vez)"},
+                status=status.HTTP_409_CONFLICT
+            )
 
         # Restar 1
         dispo.stock -= 1

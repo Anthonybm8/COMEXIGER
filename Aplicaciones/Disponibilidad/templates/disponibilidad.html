@@ -79,6 +79,9 @@
                 <form id="formEditarCelda" action="{% url 'procesar_edicion_disponibilidad' %}" method="post">
                   {% csrf_token %}
                   <input type="hidden" name="id" id="edit_id">
+                  <input type="hidden" name="numero_mesa" id="edit_mesa">
+                  <input type="hidden" name="variedad" id="edit_variedad">
+                  <input type="hidden" name="medida" id="edit_medida">
 
                   <div class="mb-3">
                       <label class="fw-bold">Stock</label>
@@ -129,7 +132,7 @@
     </div>
 </div>
 
-<!-- MODAL SUBIR EXCEL -->
+
 <div class="modal fade" id="modalSubirExcel" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
@@ -326,19 +329,19 @@ function invalidateDraw() {
   }
 }
 
-/* NO DUPLICADOS + actualiza ID + SIEMPRE alimenta VAR_SET */
+
 function agregarFilaVariedadSiNoExiste(nombreVariedad, variedadId="") {
   const vKey = normalizarTexto(nombreVariedad);
   if (!vKey) return null;
 
-  // set para bloquear duplicados en TODOS lados
+
   VAR_SET.add(vKey);
 
-  // mantener mapa
+
   const idActual = VAR_MAP[vKey]?.id || "";
   VAR_MAP[vKey] = { id: variedadId || idActual, nombre: nombreVariedad };
 
-  // si ya existe en DOM, solo actualiza id y retorna
+
   let fila = document.querySelector(`#tbody_matriz tr[data-var="${vKey}"]`);
   if (fila) {
     if (variedadId) fila.dataset.variedadId = variedadId; // 
@@ -517,10 +520,11 @@ function cargarMatriz(url="/api/disponibilidades/") {
     .catch(err => console.error("❌ Error carga matriz disponibilidad:", err));
 }
 
-/*  Modal editar */
+
 function abrirModalEdicionDesdeCelda(td) {
   const variedad = td.dataset.variedad || "";
   const medida = td.dataset.medida || "";
+  const mesa = td.dataset.mesa || "";
   const stock = td.dataset.stock || 0;
   const idRegistro = td.dataset.id || "";
 
@@ -528,6 +532,9 @@ function abrirModalEdicionDesdeCelda(td) {
   document.getElementById("editInfoMed").textContent = medida || "—";
 
   document.getElementById("edit_id").value = idRegistro;
+  document.getElementById("edit_mesa").value = mesa;
+  document.getElementById("edit_variedad").value = variedad;
+  document.getElementById("edit_medida").value = medida;
   document.getElementById("edit_stock").value = stock;
 
   const modal = new bootstrap.Modal(document.getElementById("modalEditarCelda"));

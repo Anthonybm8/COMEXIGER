@@ -1,8 +1,10 @@
 from django.db.models import Sum
+from django.db import IntegrityError
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from datetime import datetime
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from .models import Rendimiento, QRUsado
 from .serializers import RendimientoSerializer
@@ -11,23 +13,36 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, action
+from rest_framework.decorators import api_view, action, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 
-from Aplicaciones.Usuario.web_decorators import web_login_required
+from Aplicaciones.Usuario.web_decorators import web_admin_required
+
+
+def _mesa_sort_key(item):
+    """
+    Ordena mesas numéricas correctamente (2, 3, 10) y deja fallback para textos.
+    """
+    try:
+        return (0, int(str(item.numero_mesa).strip()))
+    except (TypeError, ValueError):
+        return (1, str(item.numero_mesa).strip().lower())
+
 
 # ================== VISTAS WEB ==================
-@web_login_required
+@web_admin_required
 def inicio(request):
     listadoRendimiento = Rendimiento.objects.filter(qr_id="JORNADA").order_by('-fecha_entrada')
     return render(request, 'rendimiento.html', {'rendimiento': listadoRendimiento})
 
-@web_login_required
+@web_admin_required
 def nuevo_rendimiento(request):
     return render(request, "nuevo_rendimiento.html")
 
-@web_login_required
+@web_admin_required
+@require_POST
 def guardar_rendimiento(request):
     """
     Manual (web). Si no lo usas, puedes eliminar esta vista.
@@ -75,14 +90,18 @@ def guardar_rendimiento(request):
     messages.error(request, "Error al guardar rendimiento")
     return redirect('nuevo_rendimiento')
 
-@web_login_required
+@web_admin_required
 def eliminar_rendimiento(request, id):
-    rendimiento_eliminar = Rendimiento.objects.get(id=id)
-    rendimiento_eliminar.delete()
-    messages.success(request, "Rendimiento eliminado exitosamente")
+    try:
+        rendimiento_eliminar = Rendimiento.objects.get(id=id)
+        rendimiento_eliminar.delete()
+        messages.success(request, "Rendimiento eliminado exitosamente")
+    except Rendimiento.DoesNotExist:
+        messages.error(request, "El rendimiento no existe.")
     return redirect('rendimiento')
 
-@web_login_required
+@web_admin_required
+@require_POST
 def procesar_edicion_rendimiento(request):
     if request.method == "POST":
         try:
@@ -165,6 +184,7 @@ class RendimientoViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def api_rendimiento_list(request):
     # ---------- GET ----------
     if request.method == 'GET':
@@ -182,12 +202,26 @@ def api_rendimiento_list(request):
                     request.query_params["hasta"]
                 ]
             )
+        elif request.query_params.get("desde"):
+            rendimientos = rendimientos.filter(
+                fecha_entrada__date__gte=request.query_params["desde"]
+            )
+        elif request.query_params.get("hasta"):
+            rendimientos = rendimientos.filter(
+                fecha_entrada__date__lte=request.query_params["hasta"]
+            )
 
         ordenar = request.query_params.get("ordenar")
         reciente = request.query_params.get("reciente")
 
         if ordenar:
-            campo = {"mesa": "numero_mesa", "fecha": "fecha_entrada"}.get(ordenar)
+            if ordenar == "mesa":
+                data = list(rendimientos)
+                data.sort(key=_mesa_sort_key, reverse=(reciente == "true"))
+                serializer = RendimientoSerializer(data, many=True)
+                return Response(serializer.data)
+
+            campo = {"fecha": "fecha_entrada"}.get(ordenar)
             if campo:
                 if reciente == "true":
                     campo = f"-{campo}"
@@ -222,7 +256,11 @@ def api_rendimiento_list(request):
     if QRUsado.objects.filter(qr_id=codigo).exists():
         return Response({"error": "Este QR ya fue utilizado"}, status=status.HTTP_409_CONFLICT)
 
-    QRUsado.objects.create(qr_id=codigo)
+    try:
+        QRUsado.objects.create(qr_id=codigo)
+    except IntegrityError:
+        # Evita 500 por escaneo concurrente del mismo QR
+        return Response({"error": "Este QR ya fue utilizado"}, status=status.HTTP_409_CONFLICT)
 
     jornada_base.bonches += 1
     jornada_base.recalcular()
@@ -238,6 +276,7 @@ def api_rendimiento_list(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def api_rendimiento_detail(request, pk):
     try:
         rendimiento = Rendimiento.objects.get(pk=pk)
@@ -264,9 +303,14 @@ def api_rendimiento_detail(request, pk):
 
         return Response(serializer.errors, status=400)
 
+    if request.method == 'DELETE':
+        rendimiento.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def api_rendimiento_stats(request):
     jornadas = Rendimiento.objects.filter(qr_id="JORNADA")
     return Response({
