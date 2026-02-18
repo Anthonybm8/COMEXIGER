@@ -8,6 +8,10 @@ from Aplicaciones.Usuario.web_decorators import web_admin_required
 from .models import Mesa, Usuario
 
 
+def account_deletion(request):
+    return render(request, "user.html")
+
+
 @ensure_csrf_cookie
 def inicio(request):
     if request.method == "POST":
